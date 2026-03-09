@@ -1,0 +1,9 @@
+[package]
+name = "wavio"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hound = "3.5.1"
+ndarray = "0.17.2"
+rustfft = "6.4.1"

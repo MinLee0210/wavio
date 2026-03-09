@@ -1,0 +1,14 @@
+# ─── clippy configuration ───────────────────────────────────────────
+# Fine-tune specific clippy lint thresholds
+
+# Functions with more than 7 args trigger `too_many_arguments`
+too-many-arguments-threshold = 7
+
+# Types with more than 250 bytes on the stack trigger `large_types_passed_by_value`
+trivial-copy-size-limit = 8
+
+# Cognitive complexity threshold before triggering `cognitive_complexity`
+cognitive-complexity-threshold = 30
+
+# Maximum number of lines in a function before triggering `too_many_lines`
+too-many-lines-threshold = 100
