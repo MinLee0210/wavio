@@ -24,9 +24,9 @@ thiserror = "2"
 # symphonia = { version = "0.5", optional = true, features = ["mp3", "aac", "flac"] }
 # rayon = { version = "1.10", optional = true }
 # dashmap = { version = "6", optional = true }
-# sled = { version = "0.34", optional = true }
-# serde = { version = "1", optional = true, features = ["derive"] }
-# bincode = { version = "1", optional = true }
+sled = { version = "0.34", optional = true }
+serde = { version = "1", optional = true, features = ["derive"] }
+bincode = { version = "1", optional = true }
 # pyo3 = { version = "0.23", optional = true, features = ["extension-module"] }
 
 [dev-dependencies]
@@ -38,7 +38,7 @@ thiserror = "2"
 default = []
 # symphonia = ["dep:symphonia"]
 # parallel = ["dep:rayon", "dep:dashmap"]
-# persist = ["dep:sled", "dep:serde", "dep:bincode"]
+persist = ["dep:sled", "dep:serde", "dep:bincode"]
 # python = ["dep:pyo3"]
 
 # [[bench]]

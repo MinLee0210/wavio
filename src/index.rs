@@ -67,6 +67,7 @@ pub struct QueryResult {
 
 /// Configuration for the in-memory index.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "persist", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexConfig {
     /// Bin width (seconds) for the time-offset histogram.
     /// Smaller values give finer offset resolution but spread hits
@@ -210,6 +211,59 @@ impl Index {
     #[allow(clippy::cast_precision_loss)]
     fn bin_to_offset(&self, bin: i64) -> f32 {
         bin as f32 * self.config.offset_bin_size
+    }
+
+    /// Saves the in-memory index to disk using persistent storage.
+    ///
+    /// This is a convenience method that creates a `PersistentIndex` and
+    /// writes all tracks and fingerprints to disk.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if persistence operations fail.
+    #[cfg(feature = "persist")]
+    pub fn save_to_disk<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), crate::error::WavioError> {
+        use crate::persist::PersistentIndex;
+
+        let mut persistent = PersistentIndex::open(&path)?;
+
+        // Extract all tracks and their fingerprints from the in-memory index
+        for (track_id, track_name) in &self.tracks.id_to_name {
+            let mut track_fps = Vec::new();
+
+            // Find all fingerprints for this track
+            for (hash, entries) in &self.table {
+                for (tid, anchor_time) in entries {
+                    if tid == track_id {
+                        track_fps.push(Fingerprint {
+                            hash: *hash,
+                            anchor_time: *anchor_time,
+                        });
+                    }
+                }
+            }
+
+            persistent.insert(track_name, &track_fps)?;
+        }
+
+        persistent.flush()?;
+        Ok(())
+    }
+
+    /// Loads an in-memory index from disk using persistent storage.
+    ///
+    /// This is a convenience method that opens a `PersistentIndex` and
+    /// loads all data into memory.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if persistence operations fail.
+    #[cfg(feature = "persist")]
+    pub fn load_from_disk<P: AsRef<std::path::Path>>(path: P) -> Result<Self, crate::error::WavioError> {
+        use crate::persist::PersistentIndex;
+
+        let persistent = PersistentIndex::open(path)?;
+        persistent.load_into_memory()
     }
 }
 

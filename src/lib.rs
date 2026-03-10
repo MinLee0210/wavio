@@ -23,3 +23,6 @@ pub mod hash;
 pub mod index;
 pub mod io;
 pub mod utils;
+
+#[cfg(feature = "persist")]
+pub mod persist;
