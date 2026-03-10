@@ -25,58 +25,58 @@
 
 - [x] Initialize Cargo workspace with `cargo new wavio --lib`
 - [x] Set up `Cargo.toml` with initial dependencies (`rustfft`, `ndarray`, `hound`)
-- [ ] Configure `clippy` + `rustfmt` with strict lints (`#![deny(clippy::all)]`)
+- [x] Configure `clippy` + `rustfmt` with strict lints (`#![deny(clippy::all)]`)
 - [x] Set up GitHub repo, `.gitignore`, branch protection on `main`
-- [ ] Set up GitHub Actions CI — `cargo test`, `cargo clippy`, `cargo fmt --check`
-- [ ] Write the top-level `lib.rs` with public module skeleton (`dsp`, `index`, `hash`)
-- [ ] Define core error type using `thiserror` — `WavioError` enum
-- [ ] Write a `CONTRIBUTING.md` — even for solo projects, forces you to think about API design
-- [ ] **Milestone:** `cargo build` passes, CI is green
+- [x] Set up GitHub Actions CI — `cargo test`, `cargo clippy`, `cargo fmt --check`
+- [x] Write the top-level `lib.rs` with public module skeleton (`dsp`, `index`, `hash`)
+- [x] Define core error type using `thiserror` — `WavioError` enum
+- [x] Write a `CONTRIBUTING.md` — even for solo projects, forces you to think about API design
+- [x] **Milestone:** `cargo build` passes, CI is green
 
 ---
 
 ### Week 2 — Audio Ingestion (~10 hrs)
 
-- [ ] Implement WAV loader using `hound` — stereo → mono downmix, normalize to `f32`
-- [ ] Write unit test: load a known WAV, assert sample count and sample rate
+- [x] Implement WAV loader using `hound` — stereo → mono downmix, normalize to `f32`
+- [x] Write unit test: load a known WAV, assert sample count and sample rate
 - [ ] Add `symphonia` feature flag (`features = ["symphonia"]`) for MP3/AAC/FLAC
-- [ ] Implement `AudioSource` trait — abstraction over WAV and symphonia decoders
+- [x] Implement `AudioSource` trait — abstraction over WAV and symphonia decoders
 - [ ] 🦀 Handle `symphonia`'s `Decoder` trait objects carefully — boxing required
 - [ ] Write integration test: load MP3 and WAV of same file, assert same sample length
 - [ ] Add resampling stub — note: full resampling deferred to Month 2
-- [ ] ⚠️ Decide on internal sample rate standard (recommend: 22,050 Hz) — document this decision in `ARCHITECTURE.md`
-- [ ] **Milestone:** Can load WAV and MP3 files into a normalized `Vec<f32>`
+- [x] ⚠️ Decide on internal sample rate standard (recommend: 22,050 Hz) — document this decision in `ARCHITECTURE.md`
+- [~] **Milestone:** Can load WAV and MP3 files into a normalized `Vec<f32>`
 
 ---
 
 ### Week 3 — FFT & Spectrogram (~12 hrs)
 
-- [ ] Implement sliding window iterator over PCM samples — configurable `window_size` and `hop_size`
-- [ ] Apply Hann window function to each frame before FFT
-- [ ] Integrate `rustfft` — compute real-to-complex FFT per window frame
-- [ ] Convert complex FFT output to power spectrum (magnitude squared)
-- [ ] Convert power to dB scale: `10 * log10(power + 1e-10)`
-- [ ] 🦀 Learn `ndarray` Array2 layout — store spectrogram as `Array2<f32>` (shape: `[n_frames, n_bins]`)
-- [ ] Write unit test: sine wave at known frequency should show peak at that bin
-- [ ] Write unit test: all-zeros input should produce all-`-inf` dB spectrogram
+- [x] Implement sliding window iterator over PCM samples — configurable `window_size` and `hop_size`
+- [x] Apply Hann window function to each frame before FFT
+- [x] Integrate `rustfft` — compute real-to-complex FFT per window frame
+- [x] Convert complex FFT output to power spectrum (magnitude squared)
+- [x] Convert power to dB scale: `10 * log10(power + 1e-10)`
+- [x] 🦀 Learn `ndarray` Array2 layout — store spectrogram as `Array2<f32>` (shape: `[n_frames, n_bins]`)
+- [x] Write unit test: sine wave at known frequency should show peak at that bin
+- [x] Write unit test: all-zeros input should produce all-`-inf` dB spectrogram
 - [ ] Benchmark FFT pipeline with `criterion` — establish baseline ms/track
 - [ ] ⚠️ FFT size choice (2048 vs 4096) affects frequency resolution vs time resolution — test both, document tradeoff
-- [ ] **Milestone:** Can generate a correct spectrogram from a WAV file
+- [x] **Milestone:** Can generate a correct spectrogram from a WAV file
 
 ---
 
 ### Week 4 — Peak Detection (~10 hrs)
 
-- [ ] Implement 2D local maximum filter over spectrogram (neighborhood size: configurable)
-- [ ] Apply amplitude threshold filter — discard peaks below `threshold_db` (default: `-40.0`)
-- [ ] Return peaks as `Vec<Peak>` where `Peak { time: f32, freq: f32, amplitude: f32 }`
+- [x] Implement 2D local maximum filter over spectrogram (neighborhood size: configurable)
+- [x] Apply amplitude threshold filter — discard peaks below `threshold_db` (default: `-40.0`)
+- [x] Return peaks as `Vec<Peak>` where `Peak { time: f32, freq: f32, amplitude: f32 }`
 - [ ] 🦀 Use `ndarray`'s `.windows()` for neighborhood scanning — avoid manual index arithmetic
-- [ ] Write unit test: synthetic spectrogram with known peaks, assert exact recovery
-- [ ] Write unit test: noisy spectrogram, assert peaks are above threshold only
+- [x] Write unit test: synthetic spectrogram with known peaks, assert exact recovery
+- [x] Write unit test: noisy spectrogram, assert peaks are above threshold only
 - [ ] Tune default parameters (`neighborhood = 20`, `threshold_db = -40.0`) on real music files
 - [ ] ⚠️ Too many peaks = slow hashing. Too few = poor recall. Target: 200–500 peaks per 10s clip
-- [ ] Add `PeakExtractorConfig` struct with `Default` impl — all tunable params in one place
-- [ ] **Milestone:** Can extract constellation points from a real song spectrogram
+- [x] Add `PeakExtractorConfig` struct with `Default` impl — all tunable params in one place
+- [x] **Milestone:** Can extract constellation points from a real song spectrogram
 
 ---
 
@@ -88,34 +88,34 @@
 
 ### Week 5 — Combinatorial Hashing (~10 hrs)
 
-- [ ] Design hash encoding: `(freq1_bin, freq2_bin, delta_t_quantized)` → `u64`
-- [ ] Implement `generate_hashes(peaks: &[Peak], fan_value: usize) -> Vec<(u64, f32)>`
+- [x] Design hash encoding: `(freq1_bin, freq2_bin, delta_t_quantized)` → `u64`
+- [x] Implement `generate_hashes(peaks: &[Peak], fan_value: usize) -> Vec<(u64, f32)>`
   - Each hash paired with its anchor time `t1`
-- [ ] Sort peaks by time before pairing — order matters for determinism
-- [ ] Apply `max_dt` and `min_dt` constraints on peak pairs (default: `0.0`–`1.0` sec)
-- [ ] 🦀 Use bit-packing for the hash: `freq1 << 40 | freq2 << 20 | delta_t` — fits in `u64` cleanly
-- [ ] Write unit test: same audio segment always produces same hashes (determinism)
-- [ ] Write unit test: two different songs produce non-overlapping hash sets (collision rate < 5%)
-- [ ] Add `HashConfig` struct — `fan_value`, `min_dt`, `max_dt`, `freq_bins`
-- [ ] **Milestone:** Can generate a stable, deterministic set of hashes from peaks
+- [x] Sort peaks by time before pairing — order matters for determinism
+- [x] Apply `max_dt` and `min_dt` constraints on peak pairs (default: `0.0`–`1.0` sec)
+- [x] 🦀 Use bit-packing for the hash: `freq1 << 40 | freq2 << 20 | delta_t` — fits in `u64` cleanly
+- [x] Write unit test: same audio segment always produces same hashes (determinism)
+- [x] Write unit test: two different songs produce non-overlapping hash sets (collision rate < 5%)
+- [x] Add `HashConfig` struct — `fan_value`, `min_dt`, `max_dt`, `freq_bins`
+- [x] **Milestone:** Can generate a stable, deterministic set of hashes from peaks
 
 ---
 
 ### Week 6 — In-Memory Index (~10 hrs)
 
-- [ ] Design `Index` struct — wraps `HashMap<u64, Vec<(TrackId, f32)>>`
+- [x] Design `Index` struct — wraps `HashMap<u64, Vec<(TrackId, f32)>>`
   - `TrackId` = `u32` internally, mapped to `String` name
-- [ ] Implement `Index::insert(track_id: &str, hashes: Vec<(u64, f32)>)`
-- [ ] Implement `Index::query(hashes: &[(u64, f32)]) -> Option<QueryResult>`
+- [x] Implement `Index::insert(track_id: &str, hashes: Vec<(u64, f32)>)`
+- [x] Implement `Index::query(hashes: &[(u64, f32)]) -> Option<QueryResult>`
   - Build per-track time-offset histograms
   - Return track with highest histogram peak
-- [ ] Define `QueryResult { track_id: String, score: u32, offset_secs: f32 }`
-- [ ] Write unit test: index 1 track, query exact clip → correct match
-- [ ] Write unit test: index 10 tracks, query clip from track 5 → correct match only
-- [ ] Write unit test: query audio not in index → `None` result
-- [ ] ⚠️ Offset histogram bin size affects accuracy — test `10ms` vs `50ms` bins
+- [x] Define `QueryResult { track_id: String, score: u32, offset_secs: f32 }`
+- [x] Write unit test: index 1 track, query exact clip → correct match
+- [x] Write unit test: index 10 tracks, query clip from track 5 → correct match only
+- [x] Write unit test: query audio not in index → `None` result
+- [x] ⚠️ Offset histogram bin size affects accuracy — test `10ms` vs `50ms` bins
 - [ ] Benchmark: query latency on 1k track index with `criterion`
-- [ ] **Milestone:** Full round-trip — WAV file → index → query → correct track name
+- [x] **Milestone:** Full round-trip — WAV file → index → query → correct track name
 
 ---
 
