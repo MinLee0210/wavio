@@ -18,5 +18,8 @@
 //! the weight of an ML stack.
 
 pub mod dsp;
+pub mod error;
 pub mod hash;
 pub mod index;
+pub mod io;
+pub mod utils;
