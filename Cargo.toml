@@ -14,11 +14,17 @@ keywords = ["audio", "fingerprint", "dsp", "spectrogram", "music"]
 categories = ["multimedia::audio", "algorithms", "science"]
 exclude = ["data/", "docs/", "scripts/", ".github/"]
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 hound = "3.5.1"
 ndarray = "0.17.2"
 rustfft = "6.4.1"
 thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+indicatif = "0.17"
+anyhow = "1.0"
 
 # Optional dependencies, gated behind feature flags
 # symphonia = { version = "0.5", optional = true, features = ["mp3", "aac", "flac"] }
@@ -27,19 +33,21 @@ dashmap = { version = "6", optional = true }
 sled = { version = "0.34", optional = true }
 serde = { version = "1", optional = true, features = ["derive"] }
 bincode = { version = "1", optional = true }
-# pyo3 = { version = "0.23", optional = true, features = ["extension-module"] }
+pyo3 = { version = "0.23", optional = true, features = ["extension-module"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 # proptest = "1"
-# assert_cmd = "2"
+assert_cmd = "2.0.16"
+predicates = "3"
+tempfile = "3"
 
 [features]
 default = []
 # symphonia = ["dep:symphonia"]
 parallel = ["dep:rayon", "dep:dashmap"]
 persist = ["dep:sled", "dep:serde", "dep:bincode"]
-# python = ["dep:pyo3"]
+python = ["dep:pyo3"]
 
 [[bench]]
 name = "fingerprint"

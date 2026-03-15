@@ -26,3 +26,7 @@ pub mod utils;
 
 #[cfg(feature = "persist")]
 pub mod persist;
+
+/// Python bindings via PyO3.
+#[cfg(feature = "python")]
+pub mod python;
