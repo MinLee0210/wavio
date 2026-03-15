@@ -121,32 +121,32 @@
 
 ### Week 7 — On-Disk Persistence (`sled` feature) (~10 hrs)
 
-- [ ] Add `persist` feature flag gating `sled` dependency
-- [ ] Design on-disk schema: key = `hash (u64 as bytes)`, value = `Vec<(u32, f32)>` (bincode-encoded)
-- [ ] Implement `PersistentIndex` wrapping `sled::Db` with same interface as `Index`
-- [ ] Implement `PersistentIndex::open(path: &Path)` and `::flush()`
-- [ ] 🦀 `sled` keys must be byte slices — use `u64::to_be_bytes()` for consistent ordering
-- [ ] Implement merge: load `PersistentIndex` into memory for querying (hybrid approach)
-- [ ] Write integration test: index tracks, drop process, reopen DB, query → still correct
-- [ ] ⚠️ `sled` is in maintenance mode — document this, note `redb` as future alternative
-- [ ] Add `Index::save_to_disk(path)` and `Index::load_from_disk(path)` convenience methods
-- [ ] **Milestone:** Index survives process restart
+- [x] Add `persist` feature flag gating `sled` dependency
+- [x] Design on-disk schema: key = `hash (u64 as bytes)`, value = `Vec<(u32, f32)>` (bincode-encoded)
+- [x] Implement `PersistentIndex` wrapping `sled::Db` with same interface as `Index`
+- [x] Implement `PersistentIndex::open(path: &Path)` and `::flush()`
+- [x] 🦀 `sled` keys must be byte slices — use `u64::to_be_bytes()` for consistent ordering
+- [x] Implement merge: load `PersistentIndex` into memory for querying (hybrid approach)
+- [x] Write integration test: index tracks, drop process, reopen DB, query → still correct
+- [x] ⚠️ `sled` is in maintenance mode — document this, note `redb` as future alternative
+- [x] Add `Index::save_to_disk(path)` and `Index::load_from_disk(path)` convenience methods
+- [x] **Milestone:** Index survives process restart
 
 ---
 
 ### Week 8 — Parallelism + Benchmarking (~10 hrs)
 
-- [ ] Add `rayon` dependency, gate behind `parallel` feature flag (on by default)
-- [ ] Parallelize fingerprint generation: `tracks.par_iter().map(|t| fingerprint(t))`
-- [ ] Parallelize peak extraction across spectrogram frames with `rayon`
-- [ ] 🦀 `ndarray` + `rayon`: use `par_axis_iter` — tricky but worth it
-- [ ] Set up `benches/` directory with `criterion` benchmarks:
+- [x] Add `rayon` dependency, gate behind `parallel` feature flag (on by default)
+- [x] Parallelize fingerprint generation: `tracks.par_iter().map(|t| fingerprint(t))`
+- [x] Parallelize peak extraction across spectrogram frames with `rayon`
+- [x] 🦀 `ndarray` + `rayon`: use `par_axis_iter` — tricky but worth it
+- [x] Set up `benches/` directory with `criterion` benchmarks:
   - `bench_fingerprint_single` — one 3-min WAV
   - `bench_index_1k` — index 1,000 synthetic tracks
   - `bench_query_1k` — 1,000 queries against 1k-track index
-- [ ] Run benchmarks, record baseline numbers in `BENCHMARKS.md`
-- [ ] ⚠️ `DashMap` for concurrent index writes — consider if needed for multi-threaded indexing
-- [ ] **Milestone:** Parallel indexing working, benchmarks documented
+- [x] Run benchmarks, record baseline numbers in `BENCHMARKS.md`
+- [x] ⚠️ `DashMap` for concurrent index writes — consider if needed for multi-threaded indexing
+- [x] **Milestone:** Parallel indexing working, benchmarks documented
 
 ---
 

@@ -5,6 +5,10 @@
 
 use ndarray::Array2;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
+
 /// A single spectral peak (constellation point).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Peak {
@@ -126,6 +130,88 @@ pub fn extract_peaks(spectrogram: &Array2<f32>, config: &PeakExtractorConfig) ->
     }
 
     // Sort by time, then by frequency for deterministic output.
+    peaks.sort_by(|a, b| {
+        a.time
+            .partial_cmp(&b.time)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(
+                a.freq
+                    .partial_cmp(&b.freq)
+                    .unwrap_or(std::cmp::Ordering::Equal),
+            )
+    });
+
+    peaks
+}
+
+/// Parallel variant of [`extract_peaks`] using `rayon`.
+///
+/// Distributes frame-level local-max computation across the thread pool.
+/// Each frame is independent (read-only spectrogram access), making this
+/// embarrassingly parallel. Results are merged and sorted identically to
+/// the serial version, guaranteeing the same output.
+///
+/// Requires the `parallel` feature flag.
+///
+/// # Arguments
+///
+/// * `spectrogram` -- dB power spectrogram of shape `[n_frames, n_bins]`.
+/// * `config` -- tuning parameters for extraction.
+#[cfg(feature = "parallel")]
+#[must_use]
+#[allow(clippy::cast_precision_loss)]
+pub fn extract_peaks_parallel(spectrogram: &Array2<f32>, config: &PeakExtractorConfig) -> Vec<Peak> {
+    let (n_frames, n_bins) = spectrogram.dim();
+    let t_neigh = config.time_neighborhood;
+    let f_neigh = config.freq_neighborhood;
+    let threshold = config.threshold_db;
+    let freq_res = config.freq_per_bin();
+    let time_res = config.time_per_frame();
+
+    // Each frame is processed independently: read-only access to `spectrogram`.
+    let mut peaks: Vec<Peak> = (0..n_frames)
+        .into_par_iter()
+        .flat_map(|frame| {
+            let mut frame_peaks = Vec::new();
+
+            for bin in 0..n_bins {
+                let val = spectrogram[[frame, bin]];
+
+                if val < threshold {
+                    continue;
+                }
+
+                let t_start = frame.saturating_sub(t_neigh);
+                let t_end = (frame + t_neigh + 1).min(n_frames);
+                let f_start = bin.saturating_sub(f_neigh);
+                let f_end = (bin + f_neigh + 1).min(n_bins);
+
+                let mut is_max = true;
+                'outer: for t in t_start..t_end {
+                    for f in f_start..f_end {
+                        if (t, f) == (frame, bin) {
+                            continue;
+                        }
+                        if spectrogram[[t, f]] >= val {
+                            is_max = false;
+                            break 'outer;
+                        }
+                    }
+                }
+
+                if is_max {
+                    frame_peaks.push(Peak {
+                        time: frame as f32 * time_res,
+                        freq: bin as f32 * freq_res,
+                        amplitude: val,
+                    });
+                }
+            }
+
+            frame_peaks
+        })
+        .collect();
+
     peaks.sort_by(|a, b| {
         a.time
             .partial_cmp(&b.time)

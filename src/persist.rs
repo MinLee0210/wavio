@@ -4,9 +4,19 @@
 //! that stores fingerprints persistently while maintaining the same query
 //! interface as the in-memory `Index`.
 //!
+//! # Backend Status
+//!
+//! **Note:** `sled` is currently in maintenance mode and is not receiving
+//! new feature development. For future versions of wavio, consider migrating
+//! to [`redb`](https://crates.io/crates/redb), which offers a similar
+//! embedded key-value store API with active development, ACID transactions,
+//! and no unsafe code. The `PersistentIndex` API is designed to be
+//! backend-agnostic so that swapping `sled` for `redb` requires only
+//! changes to this module.
+//!
 //! # Disk Layout
 //!
-//! The persistent index uses three sled trees:
+//! The persistent index uses four sled trees:
 //! - `hashes`: Maps from `u64` hash (as big-endian bytes) to bincode-encoded
 //!   `Vec<(u32, f32)>` (TrackId, anchor_time) pairs.
 //! - `tracks_by_name`: Maps track name to track ID.
