@@ -158,33 +158,33 @@
 
 ### Week 9 — CLI Tool (~10 hrs)
 
-- [ ] Add `[[bin]]` target `wavio-cli` in `Cargo.toml`
-- [ ] Add `clap` dependency with derive feature
-- [ ] Implement `index` subcommand: `wavio index --db ./wavio.db ./music/*.mp3`
+- [x] Add `[[bin]]` target `wavio-cli` in `Cargo.toml`
+- [x] Add `clap` dependency with derive feature
+- [x] Implement `index` subcommand: `wavio index --db ./wavio.db ./music/*.mp3`
   - Walks directory, fingerprints all audio files, writes to persistent index
-- [ ] Implement `query` subcommand: `wavio query --db ./wavio.db ./clip.wav`
+- [x] Implement `query` subcommand: `wavio query --db ./wavio.db ./clip.wav`
   - Returns best match, score, and estimated time offset
-- [ ] Implement `info` subcommand: `wavio info --db ./wavio.db` — track count, hash count
-- [ ] Add `--verbose` flag — print peak count, hash count, query time
-- [ ] Add progress bar with `indicatif` crate for batch indexing
-- [ ] Write CLI integration tests using `assert_cmd` crate
-- [ ] ⚠️ Error messages must be human-readable — DSP engineers will debug from CLI output
-- [ ] **Milestone:** Can index a folder of music and identify a clip from the command line
+- [x] Implement `info` subcommand: `wavio info --db ./wavio.db` — track count, hash count
+- [x] Add `--verbose` flag — print peak count, hash count, query time
+- [x] Add progress bar with `indicatif` crate for batch indexing
+- [x] Write CLI integration tests using `assert_cmd` crate
+- [x] ⚠️ Error messages must be human-readable — DSP engineers will debug from CLI output
+- [x] **Milestone:** Can index a folder of music and identify a clip from the command line
 
 ---
 
 ### Week 10 — Python Bindings (`PyO3`) (~10 hrs)
 
-- [ ] Add `pyo3` dependency with `extension-module` feature
-- [ ] Create `python/` directory with `pyproject.toml` using `maturin`
-- [ ] 🦀 `maturin develop` workflow — understand editable installs before writing bindings
-- [ ] Expose `PyFingerprinter` class — `.fingerprint_file(path: str) -> list[tuple[int, float]]`
-- [ ] Expose `PyIndex` class — `.insert(track_id, fingerprints)`, `.query(fingerprints) -> dict`
-- [ ] Write Python test suite: `pytest tests/test_wavio.py`
-- [ ] ⚠️ GIL handling — release GIL during fingerprinting with `py.allow_threads(|| ...)`
+- [x] Add `pyo3` dependency with `extension-module` feature
+- [x] Create `python/` directory with `pyproject.toml` using `maturin`
+- [x] 🦀 `maturin develop` workflow — understand editable installs before writing bindings
+- [x] Expose `PyFingerprinter` class — `.fingerprint_file(path: str) -> list[tuple[int, float]]`
+- [x] Expose `PyIndex` class — `.insert(track_id, fingerprints)`, `.query(fingerprints) -> dict`
+- [x] Write Python test suite: `pytest tests/test_wavio.py`
+- [x] ⚠️ GIL handling — release GIL during fingerprinting with `py.allow_threads(|| ...)`
 - [ ] Add `wavio` to PyPI via `maturin publish` (optional — can defer to v0.2)
-- [ ] Write `python/README.md` with pip install + usage example
-- [ ] **Milestone:** `import wavio` works in Python, full round-trip test passes
+- [x] Write `python/README.md` with pip install + usage example
+- [x] **Milestone:** `import wavio` works in Python, full round-trip test passes
 
 ---
 

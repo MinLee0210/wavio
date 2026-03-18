@@ -49,6 +49,11 @@ parallel = ["dep:rayon", "dep:dashmap"]
 persist = ["dep:sled", "dep:serde", "dep:bincode"]
 python = ["dep:pyo3"]
 
+[[bin]]
+name = "wavio-cli"
+path = "src/bin/wavio-cli.rs"
+required-features = ["persist"]
+
 [[bench]]
 name = "fingerprint"
 harness = false
