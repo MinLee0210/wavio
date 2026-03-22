@@ -11,6 +11,7 @@ use rayon::prelude::*;
 
 /// A single spectral peak (constellation point).
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct Peak {
     /// Time position in seconds within the audio.
     pub time: f32,
@@ -22,6 +23,7 @@ pub struct Peak {
 
 /// Configuration for the peak extraction algorithm.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct PeakExtractorConfig {
     /// Half-width of the neighborhood window along the time axis (frames).
     pub time_neighborhood: usize,

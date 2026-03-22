@@ -14,6 +14,7 @@ use rayon::prelude::*;
 
 /// Configuration for the combinatorial hashing algorithm.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct HashConfig {
     /// Maximum number of target peaks to pair with each anchor peak.
     pub fan_value: usize,
@@ -47,6 +48,7 @@ impl Default for HashConfig {
 
 /// A single fingerprint hash paired with its anchor time.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[non_exhaustive]
 pub struct Fingerprint {
     /// The combinatorial hash value.
     pub hash: u64,

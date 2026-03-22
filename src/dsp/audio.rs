@@ -17,6 +17,7 @@ pub const INTERNAL_SAMPLE_RATE: u32 = 22_050;
 
 /// Raw audio data loaded into memory, ready for DSP processing.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct AudioData {
     /// Mono PCM samples normalized to the range `[-1.0, 1.0]`.
     pub samples: Vec<f32>,

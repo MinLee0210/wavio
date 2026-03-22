@@ -51,6 +51,7 @@ impl TrackMap {
 
 /// The result of a fingerprint query against the index.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct QueryResult {
     /// Name of the best-matching track.
     pub track_id: String,
@@ -67,6 +68,7 @@ pub struct QueryResult {
 
 /// Configuration for the in-memory index.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 #[cfg_attr(feature = "persist", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexConfig {
     /// Bin width (seconds) for the time-offset histogram.

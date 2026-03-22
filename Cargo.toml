@@ -37,7 +37,7 @@ pyo3 = { version = "0.23", optional = true, features = ["extension-module"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
-# proptest = "1"
+proptest = "1"
 assert_cmd = "2.0.16"
 predicates = "3"
 tempfile = "3"
