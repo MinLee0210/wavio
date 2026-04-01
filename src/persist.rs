@@ -18,10 +18,10 @@
 //!
 //! The persistent index uses four sled trees:
 //! - `hashes`: Maps from `u64` hash (as big-endian bytes) to bincode-encoded
-//!   `Vec<(u32, f32)>` (TrackId, anchor_time) pairs.
+//!   `Vec<(u32, f32)>` (`TrackId`, `anchor_time`) pairs.
 //! - `tracks_by_name`: Maps track name to track ID.
 //! - `tracks_by_id`: Maps track ID (as bytes) to track name.
-//! - `metadata`: Stores configuration and the next available TrackId.
+//! - `metadata`: Stores configuration and the next available `TrackId`.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -137,11 +137,11 @@ impl PersistentIndex {
             let new_id = current_next_id;
             // Store bidirectional mapping
             self.tracks_by_name
-                .insert(track_name, new_id.to_le_bytes().to_vec())
+                .insert(track_name, new_id.to_le_bytes().as_ref())
                 .map_err(|e| WavioError::IoError(e.to_string()))?;
 
             self.tracks_by_id
-                .insert(new_id.to_le_bytes().to_vec(), track_name)
+                .insert(new_id.to_le_bytes().as_ref(), track_name)
                 .map_err(|e| WavioError::IoError(e.to_string()))?;
 
             self.metadata_tree
@@ -157,7 +157,7 @@ impl PersistentIndex {
 
             let mut entries = if let Some(val) = self
                 .hashes_tree
-                .get(&key)
+                .get(key)
                 .map_err(|e| WavioError::IoError(e.to_string()))?
             {
                 bincode::deserialize(&val).unwrap_or_default()
@@ -169,7 +169,7 @@ impl PersistentIndex {
             let encoded = bincode::serialize(&entries).map_err(|e| WavioError::IndexError(e.to_string()))?;
 
             self.hashes_tree
-                .insert(&key, encoded)
+                .insert(key, encoded)
                 .map_err(|e| WavioError::IoError(e.to_string()))?;
         }
 
@@ -198,7 +198,7 @@ impl PersistentIndex {
 
         for fp in fingerprints {
             let key = fp.hash.to_be_bytes();
-            if let Ok(Some(val)) = self.hashes_tree.get(&key) {
+            if let Ok(Some(val)) = self.hashes_tree.get(key) {
                 if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(&val) {
                     for (track_id, db_time) in entries {
                         let offset = db_time - fp.anchor_time;
@@ -250,11 +250,11 @@ impl PersistentIndex {
         Ok(())
     }
 
-    /// Retrieves the track name for a given TrackId.
+    /// Retrieves the track name for a given `TrackId`.
     #[must_use]
     fn track_name(&self, track_id: TrackId) -> Option<String> {
         self.tracks_by_id
-            .get(track_id.to_le_bytes().to_vec())
+            .get(track_id.to_le_bytes().as_ref())
             .ok()
             .flatten()
             .and_then(|v| String::from_utf8(v.to_vec()).ok())
@@ -283,7 +283,7 @@ impl PersistentIndex {
         let mut in_memory_index = Index::new(self.config.clone());
 
         // Iterate over all hash entries and load them into memory
-        for result in self.hashes_tree.iter() {
+        for result in &self.hashes_tree {
             let (hash_bytes, val) = result.map_err(|e| WavioError::IoError(e.to_string()))?;
 
             if hash_bytes.len() == 8 {

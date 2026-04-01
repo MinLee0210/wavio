@@ -1,14 +1,15 @@
 use assert_cmd::Command;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 fn get_wav_path() -> PathBuf {
-    // We assume there's a way to generate a simple WAV or we'll just test the error handling.
-    // Given the difficulty of generating a WAV here without hound logic, 
-    // let's test the CLI's basic existence and simple errors 
-    // like missing database or invalid inputs.
+    // Data file used for integration tests that exercise audio loading.
     PathBuf::from("data/sample.wav")
 }
+
+// Suppress the dead_code warning: get_wav_path is retained for future tests
+// that load real audio. Remove this allow when a full round-trip test is added.
+#[allow(dead_code)]
+const _WAV_PATH_HELPER: fn() -> PathBuf = get_wav_path;
 
 #[test]
 fn test_cli_info_no_db() {

@@ -21,6 +21,36 @@ pub struct Peak {
     pub amplitude: f32,
 }
 
+impl Peak {
+    /// Creates a new `Peak` with the specified time, frequency, and amplitude.
+    ///
+    /// # Arguments
+    ///
+    /// * `time` - Time position in seconds.
+    /// * `freq` - Frequency in Hz.
+    /// * `amplitude` - Amplitude in dB.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::dsp::peaks::Peak;
+    ///
+    /// let peak = Peak::new(1.0, 440.0, -10.0);
+    /// assert_eq!(peak.time, 1.0);
+    /// assert_eq!(peak.freq, 440.0);
+    /// assert_eq!(peak.amplitude, -10.0);
+    /// ```
+    #[must_use]
+    pub fn new(time: f32, freq: f32, amplitude: f32) -> Self {
+        Self {
+            time,
+            freq,
+            amplitude,
+        }
+    }
+}
+
+
 /// Configuration for the peak extraction algorithm.
 #[derive(Debug, Clone)]
 #[non_exhaustive]

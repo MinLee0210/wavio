@@ -190,39 +190,40 @@
 
 ### Week 11 — Documentation & API Polish (~10 hrs)
 
-- [ ] Write `//!` crate-level doc comment in `lib.rs` — overview, quick example, feature flags
-- [ ] Write `///` doc comments on every public struct, trait, and function
-- [ ] Add `# Examples` sections to all public functions — `cargo test --doc` must pass
-- [ ] Run `cargo doc --open` — fix any broken links or missing docs
-- [ ] Write `ARCHITECTURE.md`:
-  - ASCII pipeline diagram
-  - Design decisions and rationale (sample rate, FFT size, hash bit-packing)
-  - Known limitations section
-- [ ] Update `README.md` — add real benchmark numbers, installation, CLI usage
-- [ ] Add `CHANGELOG.md` following Keep a Changelog format
-- [ ] Review public API — rename anything ambiguous, seal internal traits with `pub(crate)`
-- [ ] Run `cargo clippy -- -W clippy::pedantic`, fix all warnings
-- [ ] ⚠️ Add `#[non_exhaustive]` on enums/structs you may extend — prevents breaking changes in v0.2
-- [ ] **Milestone:** `cargo doc` is complete, zero warnings, all doc tests pass
+- [x] Write `//!` crate-level doc comment in `lib.rs` — overview, quick example, feature flags
+- [x] Write `///` doc comments on every public struct, trait, and function
+- [x] Add `# Examples` sections to all public functions — `cargo test --doc` must pass
+- [x] Run `cargo doc --open` — fix any broken links or missing docs
+- [x] Write `ARCHITECTURE.md`:
+  - [x] ASCII pipeline diagram
+  - [x] Design decisions and rationale (sample rate, FFT size, hash bit-packing)
+  - [x] Known limitations section
+- [x] Update `README.md` — add real benchmark numbers, installation, CLI usage
+- [x] Add `CHANGELOG.md` following Keep a Changelog format
+- [x] Review public API — rename anything ambiguous, seal internal traits with `pub(crate)`
+- [x] Run `cargo clippy -- -W clippy::pedantic`, fix all warnings
+- [x] ⚠️ Add `#[non_exhaustive]` on enums/structs you may extend — prevents breaking changes in v0.2
+- [x] **Milestone:** `cargo doc` is complete, zero warnings, all doc tests pass
 
 ---
 
 ### Week 12 — Testing, Hardening & Publish (~10 hrs)
 
-- [ ] Write property-based tests with `proptest`:
-  - Fingerprinting is deterministic across runs
-  - Query always returns `None` for empty index
-  - Score is monotonically higher for longer matching clips
+- [x] Write property-based tests with `proptest`:
+  - [x] Fingerprinting is deterministic across runs
+  - [x] Query always returns `None` for empty index
+  - [x] Score is monotonically higher for longer matching clips
 - [ ] Set up code coverage with `cargo-tarpaulin` — target > 70%
-- [ ] Test on Linux + macOS via GitHub Actions matrix build
-- [ ] Run `cargo audit` — fix any known vulnerability advisories
-- [ ] Pin MSRV in `Cargo.toml`: `rust-version = "1.75.0"`
-- [ ] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
+- [x] Test on Linux + macOS via GitHub Actions matrix build
+- [x] Run `cargo audit` — fix any known vulnerability advisories
+- [x] Pin MSRV in `Cargo.toml`: `rust-version = "1.85.0"`
+- [x] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
 - [ ] Tag `v0.1.0`, write GitHub release notes
 - [ ] Publish to `crates.io`: `cargo publish`
 - [ ] Announce on r/rust, This Week in Rust submissions, Hacker News (Show HN)
-- [ ] ⚠️ `crates.io` publishes are permanent and immutable — double-check before publishing
+- [x] ⚠️ `crates.io` publishes are permanent and immutable — double-check before publishing
 - [ ] **Milestone:** `wavio = "0.1"` works in any Rust project worldwide 🎉
+
 
 ---
 
@@ -259,3 +260,23 @@
 > **If Month 1 runs over:** cut `symphonia` support, WAV-only for v0.1, add symphonia in v0.2.  
 > **If Month 3 runs over:** defer PyO3 bindings entirely — CLI + crates.io publish is a solid v0.1.  
 > **Never cut:** tests, benchmarks, `ARCHITECTURE.md` — these pay off immediately.
+
+---
+
+## Beyond v0.1 — Future Improvements
+
+Here are great avenues to explore to take `wavio` to the next level:
+
+### Core DSP & Accuracy
+
+- [ ] **Native Resampling**: Implement or integrate a high-quality resampling crate (like `rubato` or `dasplib`) so users can ingest audio at 48kHz or 44.1kHz and the pipeline automatically downsamples to the `INTERNAL_SAMPLE_RATE` (22,050 Hz).
+- [ ] **Rich Format Decoding**: Implement the stubbed `symphonia` feature to ingest standard compressed formats (MP3, AAC, FLAC, OGG).
+- [ ] **Noise Injection Testing**: Build scripts to take clean clips, inject various levels of AWGN (Additive White Gaussian Noise) or simulate mobile phone mic frequency roll-off, to scientifically test your matcher's true recall & precision boundaries.
+- [ ] **Parameter Auto-Tuning**: Allow the `PeakExtractorConfig` limits to auto-tune depending on the loudness of the ingested signal rather than relying on a static `-40.0 dB` threshold.
+
+### Engineering & Scale
+
+- [ ] **Migrate away from `sled`**: As noted in `ARCHITECTURE.md`, `sled` is essentially in maintenance mode. `redb` is an excellent, actively-maintained, fully-ACID alternative in Rust. Migrating the persistent backend to `redb` would future-proof the database structure.
+- [ ] **WebAssembly (WASM) Target**: Add build support for `wasm32-unknown-unknown`. Audio fingerprinting client-side in the browser means you wouldn't need to upload full audio clips to a server, saving immense bandwidth.
+- [ ] **C / FFI Bindings**: Expose `extern "C"` functions so `wavio` can be consumed via shared libraries (`.so` / `.dylib`) allowing integration into backend languages like Go, C++, or Node.js.
+- [ ] **Memory-Mapped (mmap) Index**: For gigantic corpora, loading the entire `HashMap` into memory might consume too much RAM. Implementing a read-only memory-mapped index structure can enable querying terabytes of hashes essentially for free using OS-level paging.

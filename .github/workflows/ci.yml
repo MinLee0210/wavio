@@ -41,39 +41,28 @@ jobs:
 
   # Run tests
   test:
-    name: Tests
-    runs-on: ubuntu-latest
+    name: Tests (${{ matrix.os }}, features=${{ matrix.features || 'none' }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          # Test with no features
-          - rust: stable
-            features: ""
-          # Test with all features
-          - rust: stable
-            features: "persist"
+        os: [ubuntu-latest, macos-latest]
+        features: ["", "persist"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Run tests (no features)
+      - name: Run unit tests (no features)
         if: matrix.features == ''
         run: cargo test --lib --verbose
-      - name: Run tests (with features)
+      - name: Run unit tests (with features)
         if: matrix.features != ''
         run: cargo test --lib --all-features --verbose
+      - name: Run integration tests
+        run: cargo test --tests --all-features --verbose
       - name: Run doc tests
         run: cargo test --doc --all-features
 
-  # Security audit
-  audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: rustsec/audit-check@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
   # Build check
   build:

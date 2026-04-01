@@ -9,8 +9,6 @@ use wavio::dsp::spectrogram::{compute_spectrogram, SpectrogramConfig};
 use wavio::hash::{generate_hashes, Fingerprint, HashConfig};
 use wavio::index::Index;
 
-#[cfg(feature = "parallel")]
-use rayon::prelude::*;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Peak-based audio fingerprinting CLI", long_about = None)]
@@ -119,7 +117,7 @@ fn main() -> anyhow::Result<()> {
                             index.insert(&name, &hashes);
                         }
                         Err(e) => {
-                            pb.println(format!("Failed to index '{}': {}", name, e));
+                            pb.println(format!("Failed to index '{name}': {e}"));
                         }
                     }
                 }
@@ -127,13 +125,13 @@ fn main() -> anyhow::Result<()> {
             }
             pb.finish_with_message("Indexing complete.");
 
-            println!("Saving index to {:?}...", db);
+            println!("Saving index to {db:?}...");
             index.save_to_disk(db)?;
             println!("Done.");
         }
         Commands::Query { db, input } => {
             if !db.exists() {
-                anyhow::bail!("Database file {:?} does not exist. Index first.", db);
+                anyhow::bail!("Database file {db:?} does not exist. Index first.");
             }
             let index = Index::load_from_disk(db)?;
 
@@ -151,7 +149,7 @@ fn main() -> anyhow::Result<()> {
                     hashes.len(),
                     fingerprint_time
                 );
-                println!("Query performed in {:?}", query_time);
+                println!("Query performed in {query_time:?}");
             }
 
             match result {
@@ -167,10 +165,10 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Info { db } => {
             if !db.exists() {
-                anyhow::bail!("Database file {:?} does not exist.", db);
+                anyhow::bail!("Database file {db:?} does not exist.");
             }
             let index = Index::load_from_disk(db)?;
-            println!("Database: {:?}", db);
+            println!("Database: {db:?}");
             println!("Tracks indexed: {}", index.track_count());
             println!("Total hashes: {}", index.hash_count());
         }

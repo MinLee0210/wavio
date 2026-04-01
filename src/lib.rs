@@ -66,7 +66,7 @@
 //! |------|-------------|--------------|
 //! | `parallel` | Rayon-based parallel fingerprinting and peak extraction | `rayon`, `dashmap` |
 //! | `persist` | On-disk index persistence via `sled` | `sled`, `serde`, `bincode` |
-//! | `python` | Python bindings via PyO3 | `pyo3` |
+//! | `python` | Python bindings via `PyO3` | `pyo3` |
 //!
 //! Enable features in your `Cargo.toml`:
 //!
