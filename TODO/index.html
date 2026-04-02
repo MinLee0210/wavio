@@ -1,0 +1,1777 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Peak-based audio fingerprinting. Zero overhead. Written in Rust.">
+      
+      
+      
+        <link rel="canonical" href="https://minlee0210.github.io/wavio/TODO/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>wavio — 3-Month Development Roadmap - wavio</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#wavio-3-month-development-roadmap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="wavio" class="md-header__button md-logo" aria-label="wavio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            wavio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              wavio — 3-Month Development Roadmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/MinLee0210/wavio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MinLee0210/wavio
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../python/" class="md-tabs__link">
+          
+  
+  
+  Python Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../rust/" class="md-tabs__link">
+          
+  
+  
+  Rust Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../cli/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/configuration/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="wavio" class="md-nav__button md-logo" aria-label="wavio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    wavio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/MinLee0210/wavio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    MinLee0210/wavio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Python Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rust Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Rust Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#month-1-core-dsp-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Month 1 — Core DSP Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Month 1 — Core DSP Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#week-1-project-scaffolding-8-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 1 — Project Scaffolding (~8 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-2-audio-ingestion-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 2 — Audio Ingestion (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-3-fft-spectrogram-12-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 3 — FFT &amp; Spectrogram (~12 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-4-peak-detection-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 4 — Peak Detection (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#month-2-hashing-indexing-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Month 2 — Hashing, Indexing &amp; Persistence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Month 2 — Hashing, Indexing &amp; Persistence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#week-5-combinatorial-hashing-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 5 — Combinatorial Hashing (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-6-in-memory-index-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 6 — In-Memory Index (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-7-on-disk-persistence-sled-feature-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 7 — On-Disk Persistence (sled feature) (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-8-parallelism-benchmarking-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 8 — Parallelism + Benchmarking (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#month-3-cli-python-bindings-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Month 3 — CLI, Python Bindings &amp; Release
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Month 3 — CLI, Python Bindings &amp; Release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#week-9-cli-tool-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 9 — CLI Tool (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-10-python-bindings-pyo3-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 10 — Python Bindings (PyO3) (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-11-documentation-api-polish-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 11 — Documentation &amp; API Polish (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-12-testing-hardening-publish-10-hrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week 12 — Testing, Hardening &amp; Publish (~10 hrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hours-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hours Budget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#beyond-v01-future-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Beyond v0.1 — Future Improvements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Beyond v0.1 — Future Improvements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-dsp-accuracy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core DSP &amp; Accuracy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#engineering-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engineering &amp; Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="wavio-3-month-development-roadmap">wavio — 3-Month Development Roadmap<a class="headerlink" href="#wavio-3-month-development-roadmap" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Peak-based audio fingerprinting in Rust · ~10 hrs/week · ~120 hrs total</p>
+</blockquote>
+<hr />
+<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[ ]</code></td>
+<td>Not started</td>
+</tr>
+<tr>
+<td><code>[~]</code></td>
+<td>In progress</td>
+</tr>
+<tr>
+<td><code>[x]</code></td>
+<td>Done</td>
+</tr>
+<tr>
+<td>⚠️</td>
+<td>Potential blocker</td>
+</tr>
+<tr>
+<td>🦀</td>
+<td>Rust-specific learning curve</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="month-1-core-dsp-pipeline">Month 1 — Core DSP Pipeline<a class="headerlink" href="#month-1-core-dsp-pipeline" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Goal:</strong> Raw audio in → fingerprints out. Everything else builds on this.<br />
+<strong>Budget:</strong> ~40 hrs · Weeks 1–4</p>
+</blockquote>
+<hr />
+<h3 id="week-1-project-scaffolding-8-hrs">Week 1 — Project Scaffolding (~8 hrs)<a class="headerlink" href="#week-1-project-scaffolding-8-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Initialize Cargo workspace with <code>cargo new wavio --lib</code></li>
+<li>[x] Set up <code>Cargo.toml</code> with initial dependencies (<code>rustfft</code>, <code>ndarray</code>, <code>hound</code>)</li>
+<li>[x] Configure <code>clippy</code> + <code>rustfmt</code> with strict lints (<code>#![deny(clippy::all)]</code>)</li>
+<li>[x] Set up GitHub repo, <code>.gitignore</code>, branch protection on <code>main</code></li>
+<li>[x] Set up GitHub Actions CI — <code>cargo test</code>, <code>cargo clippy</code>, <code>cargo fmt --check</code></li>
+<li>[x] Write the top-level <code>lib.rs</code> with public module skeleton (<code>dsp</code>, <code>index</code>, <code>hash</code>)</li>
+<li>[x] Define core error type using <code>thiserror</code> — <code>WavioError</code> enum</li>
+<li>[x] Write a <code>CONTRIBUTING.md</code> — even for solo projects, forces you to think about API design</li>
+<li>[x] <strong>Milestone:</strong> <code>cargo build</code> passes, CI is green</li>
+</ul>
+<hr />
+<h3 id="week-2-audio-ingestion-10-hrs">Week 2 — Audio Ingestion (~10 hrs)<a class="headerlink" href="#week-2-audio-ingestion-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Implement WAV loader using <code>hound</code> — stereo → mono downmix, normalize to <code>f32</code></li>
+<li>[x] Write unit test: load a known WAV, assert sample count and sample rate</li>
+<li>[ ] Add <code>symphonia</code> feature flag (<code>features = ["symphonia"]</code>) for MP3/AAC/FLAC</li>
+<li>[x] Implement <code>AudioSource</code> trait — abstraction over WAV and symphonia decoders</li>
+<li>[ ] 🦀 Handle <code>symphonia</code>'s <code>Decoder</code> trait objects carefully — boxing required</li>
+<li>[ ] Write integration test: load MP3 and WAV of same file, assert same sample length</li>
+<li>[ ] Add resampling stub — note: full resampling deferred to Month 2</li>
+<li>[x] ⚠️ Decide on internal sample rate standard (recommend: 22,050 Hz) — document this decision in <code>ARCHITECTURE.md</code></li>
+<li>[~] <strong>Milestone:</strong> Can load WAV and MP3 files into a normalized <code>Vec&lt;f32&gt;</code></li>
+</ul>
+<hr />
+<h3 id="week-3-fft-spectrogram-12-hrs">Week 3 — FFT &amp; Spectrogram (~12 hrs)<a class="headerlink" href="#week-3-fft-spectrogram-12-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Implement sliding window iterator over PCM samples — configurable <code>window_size</code> and <code>hop_size</code></li>
+<li>[x] Apply Hann window function to each frame before FFT</li>
+<li>[x] Integrate <code>rustfft</code> — compute real-to-complex FFT per window frame</li>
+<li>[x] Convert complex FFT output to power spectrum (magnitude squared)</li>
+<li>[x] Convert power to dB scale: <code>10 * log10(power + 1e-10)</code></li>
+<li>[x] 🦀 Learn <code>ndarray</code> Array2 layout — store spectrogram as <code>Array2&lt;f32&gt;</code> (shape: <code>[n_frames, n_bins]</code>)</li>
+<li>[x] Write unit test: sine wave at known frequency should show peak at that bin</li>
+<li>[x] Write unit test: all-zeros input should produce all-<code>-inf</code> dB spectrogram</li>
+<li>[ ] Benchmark FFT pipeline with <code>criterion</code> — establish baseline ms/track</li>
+<li>[ ] ⚠️ FFT size choice (2048 vs 4096) affects frequency resolution vs time resolution — test both, document tradeoff</li>
+<li>[x] <strong>Milestone:</strong> Can generate a correct spectrogram from a WAV file</li>
+</ul>
+<hr />
+<h3 id="week-4-peak-detection-10-hrs">Week 4 — Peak Detection (~10 hrs)<a class="headerlink" href="#week-4-peak-detection-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Implement 2D local maximum filter over spectrogram (neighborhood size: configurable)</li>
+<li>[x] Apply amplitude threshold filter — discard peaks below <code>threshold_db</code> (default: <code>-40.0</code>)</li>
+<li>[x] Return peaks as <code>Vec&lt;Peak&gt;</code> where <code>Peak { time: f32, freq: f32, amplitude: f32 }</code></li>
+<li>[ ] 🦀 Use <code>ndarray</code>'s <code>.windows()</code> for neighborhood scanning — avoid manual index arithmetic</li>
+<li>[x] Write unit test: synthetic spectrogram with known peaks, assert exact recovery</li>
+<li>[x] Write unit test: noisy spectrogram, assert peaks are above threshold only</li>
+<li>[ ] Tune default parameters (<code>neighborhood = 20</code>, <code>threshold_db = -40.0</code>) on real music files</li>
+<li>[ ] ⚠️ Too many peaks = slow hashing. Too few = poor recall. Target: 200–500 peaks per 10s clip</li>
+<li>[x] Add <code>PeakExtractorConfig</code> struct with <code>Default</code> impl — all tunable params in one place</li>
+<li>[x] <strong>Milestone:</strong> Can extract constellation points from a real song spectrogram</li>
+</ul>
+<hr />
+<h2 id="month-2-hashing-indexing-persistence">Month 2 — Hashing, Indexing &amp; Persistence<a class="headerlink" href="#month-2-hashing-indexing-persistence" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Goal:</strong> Fingerprint database you can write to and query against.<br />
+<strong>Budget:</strong> ~40 hrs · Weeks 5–8</p>
+</blockquote>
+<hr />
+<h3 id="week-5-combinatorial-hashing-10-hrs">Week 5 — Combinatorial Hashing (~10 hrs)<a class="headerlink" href="#week-5-combinatorial-hashing-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Design hash encoding: <code>(freq1_bin, freq2_bin, delta_t_quantized)</code> → <code>u64</code></li>
+<li>[x] Implement <code>generate_hashes(peaks: &amp;[Peak], fan_value: usize) -&gt; Vec&lt;(u64, f32)&gt;</code></li>
+<li>Each hash paired with its anchor time <code>t1</code></li>
+<li>[x] Sort peaks by time before pairing — order matters for determinism</li>
+<li>[x] Apply <code>max_dt</code> and <code>min_dt</code> constraints on peak pairs (default: <code>0.0</code>–<code>1.0</code> sec)</li>
+<li>[x] 🦀 Use bit-packing for the hash: <code>freq1 &lt;&lt; 40 | freq2 &lt;&lt; 20 | delta_t</code> — fits in <code>u64</code> cleanly</li>
+<li>[x] Write unit test: same audio segment always produces same hashes (determinism)</li>
+<li>[x] Write unit test: two different songs produce non-overlapping hash sets (collision rate &lt; 5%)</li>
+<li>[x] Add <code>HashConfig</code> struct — <code>fan_value</code>, <code>min_dt</code>, <code>max_dt</code>, <code>freq_bins</code></li>
+<li>[x] <strong>Milestone:</strong> Can generate a stable, deterministic set of hashes from peaks</li>
+</ul>
+<hr />
+<h3 id="week-6-in-memory-index-10-hrs">Week 6 — In-Memory Index (~10 hrs)<a class="headerlink" href="#week-6-in-memory-index-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Design <code>Index</code> struct — wraps <code>HashMap&lt;u64, Vec&lt;(TrackId, f32)&gt;&gt;</code></li>
+<li><code>TrackId</code> = <code>u32</code> internally, mapped to <code>String</code> name</li>
+<li>[x] Implement <code>Index::insert(track_id: &amp;str, hashes: Vec&lt;(u64, f32)&gt;)</code></li>
+<li>[x] Implement <code>Index::query(hashes: &amp;[(u64, f32)]) -&gt; Option&lt;QueryResult&gt;</code></li>
+<li>Build per-track time-offset histograms</li>
+<li>Return track with highest histogram peak</li>
+<li>[x] Define <code>QueryResult { track_id: String, score: u32, offset_secs: f32 }</code></li>
+<li>[x] Write unit test: index 1 track, query exact clip → correct match</li>
+<li>[x] Write unit test: index 10 tracks, query clip from track 5 → correct match only</li>
+<li>[x] Write unit test: query audio not in index → <code>None</code> result</li>
+<li>[x] ⚠️ Offset histogram bin size affects accuracy — test <code>10ms</code> vs <code>50ms</code> bins</li>
+<li>[ ] Benchmark: query latency on 1k track index with <code>criterion</code></li>
+<li>[x] <strong>Milestone:</strong> Full round-trip — WAV file → index → query → correct track name</li>
+</ul>
+<hr />
+<h3 id="week-7-on-disk-persistence-sled-feature-10-hrs">Week 7 — On-Disk Persistence (<code>sled</code> feature) (~10 hrs)<a class="headerlink" href="#week-7-on-disk-persistence-sled-feature-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Add <code>persist</code> feature flag gating <code>sled</code> dependency</li>
+<li>[x] Design on-disk schema: key = <code>hash (u64 as bytes)</code>, value = <code>Vec&lt;(u32, f32)&gt;</code> (bincode-encoded)</li>
+<li>[x] Implement <code>PersistentIndex</code> wrapping <code>sled::Db</code> with same interface as <code>Index</code></li>
+<li>[x] Implement <code>PersistentIndex::open(path: &amp;Path)</code> and <code>::flush()</code></li>
+<li>[x] 🦀 <code>sled</code> keys must be byte slices — use <code>u64::to_be_bytes()</code> for consistent ordering</li>
+<li>[x] Implement merge: load <code>PersistentIndex</code> into memory for querying (hybrid approach)</li>
+<li>[x] Write integration test: index tracks, drop process, reopen DB, query → still correct</li>
+<li>[x] ⚠️ <code>sled</code> is in maintenance mode — document this, note <code>redb</code> as future alternative</li>
+<li>[x] Add <code>Index::save_to_disk(path)</code> and <code>Index::load_from_disk(path)</code> convenience methods</li>
+<li>[x] <strong>Milestone:</strong> Index survives process restart</li>
+</ul>
+<hr />
+<h3 id="week-8-parallelism-benchmarking-10-hrs">Week 8 — Parallelism + Benchmarking (~10 hrs)<a class="headerlink" href="#week-8-parallelism-benchmarking-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Add <code>rayon</code> dependency, gate behind <code>parallel</code> feature flag (on by default)</li>
+<li>[x] Parallelize fingerprint generation: <code>tracks.par_iter().map(|t| fingerprint(t))</code></li>
+<li>[x] Parallelize peak extraction across spectrogram frames with <code>rayon</code></li>
+<li>[x] 🦀 <code>ndarray</code> + <code>rayon</code>: use <code>par_axis_iter</code> — tricky but worth it</li>
+<li>[x] Set up <code>benches/</code> directory with <code>criterion</code> benchmarks:</li>
+<li><code>bench_fingerprint_single</code> — one 3-min WAV</li>
+<li><code>bench_index_1k</code> — index 1,000 synthetic tracks</li>
+<li><code>bench_query_1k</code> — 1,000 queries against 1k-track index</li>
+<li>[x] Run benchmarks, record baseline numbers in <code>BENCHMARKS.md</code></li>
+<li>[x] ⚠️ <code>DashMap</code> for concurrent index writes — consider if needed for multi-threaded indexing</li>
+<li>[x] <strong>Milestone:</strong> Parallel indexing working, benchmarks documented</li>
+</ul>
+<hr />
+<h2 id="month-3-cli-python-bindings-release">Month 3 — CLI, Python Bindings &amp; Release<a class="headerlink" href="#month-3-cli-python-bindings-release" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Goal:</strong> Usable by others. Documented. Published.<br />
+<strong>Budget:</strong> ~40 hrs · Weeks 9–12</p>
+</blockquote>
+<hr />
+<h3 id="week-9-cli-tool-10-hrs">Week 9 — CLI Tool (~10 hrs)<a class="headerlink" href="#week-9-cli-tool-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Add <code>[[bin]]</code> target <code>wavio-cli</code> in <code>Cargo.toml</code></li>
+<li>[x] Add <code>clap</code> dependency with derive feature</li>
+<li>[x] Implement <code>index</code> subcommand: <code>wavio index --db ./wavio.db ./music/*.mp3</code></li>
+<li>Walks directory, fingerprints all audio files, writes to persistent index</li>
+<li>[x] Implement <code>query</code> subcommand: <code>wavio query --db ./wavio.db ./clip.wav</code></li>
+<li>Returns best match, score, and estimated time offset</li>
+<li>[x] Implement <code>info</code> subcommand: <code>wavio info --db ./wavio.db</code> — track count, hash count</li>
+<li>[x] Add <code>--verbose</code> flag — print peak count, hash count, query time</li>
+<li>[x] Add progress bar with <code>indicatif</code> crate for batch indexing</li>
+<li>[x] Write CLI integration tests using <code>assert_cmd</code> crate</li>
+<li>[x] ⚠️ Error messages must be human-readable — DSP engineers will debug from CLI output</li>
+<li>[x] <strong>Milestone:</strong> Can index a folder of music and identify a clip from the command line</li>
+</ul>
+<hr />
+<h3 id="week-10-python-bindings-pyo3-10-hrs">Week 10 — Python Bindings (<code>PyO3</code>) (~10 hrs)<a class="headerlink" href="#week-10-python-bindings-pyo3-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Add <code>pyo3</code> dependency with <code>extension-module</code> feature</li>
+<li>[x] Create <code>python/</code> directory with <code>pyproject.toml</code> using <code>maturin</code></li>
+<li>[x] 🦀 <code>maturin develop</code> workflow — understand editable installs before writing bindings</li>
+<li>[x] Expose <code>PyFingerprinter</code> class — <code>.fingerprint_file(path: str) -&gt; list[tuple[int, float]]</code></li>
+<li>[x] Expose <code>PyIndex</code> class — <code>.insert(track_id, fingerprints)</code>, <code>.query(fingerprints) -&gt; dict</code></li>
+<li>[x] Write Python test suite: <code>pytest tests/test_wavio.py</code></li>
+<li>[x] ⚠️ GIL handling — release GIL during fingerprinting with <code>py.allow_threads(|| ...)</code></li>
+<li>[ ] Add <code>wavio</code> to PyPI via <code>maturin publish</code> (optional — can defer to v0.2)</li>
+<li>[x] Write <code>python/README.md</code> with pip install + usage example</li>
+<li>[x] <strong>Milestone:</strong> <code>import wavio</code> works in Python, full round-trip test passes</li>
+</ul>
+<hr />
+<h3 id="week-11-documentation-api-polish-10-hrs">Week 11 — Documentation &amp; API Polish (~10 hrs)<a class="headerlink" href="#week-11-documentation-api-polish-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Write <code>//!</code> crate-level doc comment in <code>lib.rs</code> — overview, quick example, feature flags</li>
+<li>[x] Write <code>///</code> doc comments on every public struct, trait, and function</li>
+<li>[x] Add <code># Examples</code> sections to all public functions — <code>cargo test --doc</code> must pass</li>
+<li>[x] Run <code>cargo doc --open</code> — fix any broken links or missing docs</li>
+<li>[x] Write <code>ARCHITECTURE.md</code>:</li>
+<li>[x] ASCII pipeline diagram</li>
+<li>[x] Design decisions and rationale (sample rate, FFT size, hash bit-packing)</li>
+<li>[x] Known limitations section</li>
+<li>[x] Update <code>README.md</code> — add real benchmark numbers, installation, CLI usage</li>
+<li>[x] Add <code>CHANGELOG.md</code> following Keep a Changelog format</li>
+<li>[x] Review public API — rename anything ambiguous, seal internal traits with <code>pub(crate)</code></li>
+<li>[x] Run <code>cargo clippy -- -W clippy::pedantic</code>, fix all warnings</li>
+<li>[x] ⚠️ Add <code>#[non_exhaustive]</code> on enums/structs you may extend — prevents breaking changes in v0.2</li>
+<li>[x] <strong>Milestone:</strong> <code>cargo doc</code> is complete, zero warnings, all doc tests pass</li>
+</ul>
+<hr />
+<h3 id="week-12-testing-hardening-publish-10-hrs">Week 12 — Testing, Hardening &amp; Publish (~10 hrs)<a class="headerlink" href="#week-12-testing-hardening-publish-10-hrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Write property-based tests with <code>proptest</code>:</li>
+<li>[x] Fingerprinting is deterministic across runs</li>
+<li>[x] Query always returns <code>None</code> for empty index</li>
+<li>[x] Score is monotonically higher for longer matching clips</li>
+<li>[ ] Set up code coverage with <code>cargo-tarpaulin</code> — target &gt; 70%</li>
+<li>[x] Test on Linux + macOS via GitHub Actions matrix build</li>
+<li>[x] Run <code>cargo audit</code> — fix any known vulnerability advisories</li>
+<li>[x] Pin MSRV in <code>Cargo.toml</code>: <code>rust-version = "1.85.0"</code></li>
+<li>[x] Do a dry run: <code>cargo publish --dry-run</code> — fix any packaging issues</li>
+<li>[ ] Tag <code>v0.1.0</code>, write GitHub release notes</li>
+<li>[ ] Publish to <code>crates.io</code>: <code>cargo publish</code></li>
+<li>[ ] Announce on r/rust, This Week in Rust submissions, Hacker News (Show HN)</li>
+<li>[x] ⚠️ <code>crates.io</code> publishes are permanent and immutable — double-check before publishing</li>
+<li>[ ] <strong>Milestone:</strong> <code>wavio = "0.1"</code> works in any Rust project worldwide 🎉</li>
+</ul>
+<hr />
+<h2 id="dependency-map">Dependency Map<a class="headerlink" href="#dependency-map" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Crate</th>
+<th>Purpose</th>
+<th>Feature Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rustfft</code></td>
+<td>FFT computation</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>ndarray</code></td>
+<td>Spectrogram array ops</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>hound</code></td>
+<td>WAV decoding</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>thiserror</code></td>
+<td>Error types</td>
+<td>always</td>
+</tr>
+<tr>
+<td><code>symphonia</code></td>
+<td>MP3/AAC/FLAC decoding</td>
+<td><code>symphonia</code></td>
+</tr>
+<tr>
+<td><code>rayon</code></td>
+<td>Parallel processing</td>
+<td><code>parallel</code></td>
+</tr>
+<tr>
+<td><code>dashmap</code></td>
+<td>Concurrent hash map</td>
+<td><code>parallel</code></td>
+</tr>
+<tr>
+<td><code>sled</code></td>
+<td>On-disk persistence</td>
+<td><code>persist</code></td>
+</tr>
+<tr>
+<td><code>serde</code> + <code>bincode</code></td>
+<td>Serialization</td>
+<td><code>persist</code></td>
+</tr>
+<tr>
+<td><code>clap</code></td>
+<td>CLI argument parsing</td>
+<td>bin only</td>
+</tr>
+<tr>
+<td><code>indicatif</code></td>
+<td>Progress bars</td>
+<td>bin only</td>
+</tr>
+<tr>
+<td><code>pyo3</code> + <code>maturin</code></td>
+<td>Python bindings</td>
+<td><code>python</code></td>
+</tr>
+<tr>
+<td><code>criterion</code></td>
+<td>Benchmarks</td>
+<td>dev</td>
+</tr>
+<tr>
+<td><code>proptest</code></td>
+<td>Property-based testing</td>
+<td>dev</td>
+</tr>
+<tr>
+<td><code>assert_cmd</code></td>
+<td>CLI integration tests</td>
+<td>dev</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hours-budget">Hours Budget<a class="headerlink" href="#hours-budget" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Month</th>
+<th>Focus</th>
+<th>Budget</th>
+<th>Risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Month 1</td>
+<td>DSP pipeline — FFT, spectrogram, peaks</td>
+<td>40 hrs</td>
+<td>Medium — <code>ndarray</code> learning curve</td>
+</tr>
+<tr>
+<td>Month 2</td>
+<td>Hashing, in-memory index, persistence</td>
+<td>40 hrs</td>
+<td>Low — straightforward Rust</td>
+</tr>
+<tr>
+<td>Month 3</td>
+<td>CLI, PyO3 bindings, docs, publish</td>
+<td>40 hrs</td>
+<td>High — PyO3/maturin setup is fiddly</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>If Month 1 runs over:</strong> cut <code>symphonia</code> support, WAV-only for v0.1, add symphonia in v0.2.<br />
+<strong>If Month 3 runs over:</strong> defer PyO3 bindings entirely — CLI + crates.io publish is a solid v0.1.<br />
+<strong>Never cut:</strong> tests, benchmarks, <code>ARCHITECTURE.md</code> — these pay off immediately.</p>
+</blockquote>
+<hr />
+<h2 id="beyond-v01-future-improvements">Beyond v0.1 — Future Improvements<a class="headerlink" href="#beyond-v01-future-improvements" title="Permanent link">&para;</a></h2>
+<p>Here are great avenues to explore to take <code>wavio</code> to the next level:</p>
+<h3 id="core-dsp-accuracy">Core DSP &amp; Accuracy<a class="headerlink" href="#core-dsp-accuracy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Native Resampling</strong>: Implement or integrate a high-quality resampling crate (like <code>rubato</code> or <code>dasplib</code>) so users can ingest audio at 48kHz or 44.1kHz and the pipeline automatically downsamples to the <code>INTERNAL_SAMPLE_RATE</code> (22,050 Hz).</li>
+<li>[ ] <strong>Rich Format Decoding</strong>: Implement the stubbed <code>symphonia</code> feature to ingest standard compressed formats (MP3, AAC, FLAC, OGG).</li>
+<li>[ ] <strong>Noise Injection Testing</strong>: Build scripts to take clean clips, inject various levels of AWGN (Additive White Gaussian Noise) or simulate mobile phone mic frequency roll-off, to scientifically test your matcher's true recall &amp; precision boundaries.</li>
+<li>[ ] <strong>Parameter Auto-Tuning</strong>: Allow the <code>PeakExtractorConfig</code> limits to auto-tune depending on the loudness of the ingested signal rather than relying on a static <code>-40.0 dB</code> threshold.</li>
+</ul>
+<h3 id="engineering-scale">Engineering &amp; Scale<a class="headerlink" href="#engineering-scale" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Migrate away from <code>sled</code></strong>: As noted in <code>ARCHITECTURE.md</code>, <code>sled</code> is essentially in maintenance mode. <code>redb</code> is an excellent, actively-maintained, fully-ACID alternative in Rust. Migrating the persistent backend to <code>redb</code> would future-proof the database structure.</li>
+<li>[ ] <strong>WebAssembly (WASM) Target</strong>: Add build support for <code>wasm32-unknown-unknown</code>. Audio fingerprinting client-side in the browser means you wouldn't need to upload full audio clips to a server, saving immense bandwidth.</li>
+<li>[ ] <strong>C / FFI Bindings</strong>: Expose <code>extern "C"</code> functions so <code>wavio</code> can be consumed via shared libraries (<code>.so</code> / <code>.dylib</code>) allowing integration into backend languages like Go, C++, or Node.js.</li>
+<li>[ ] <strong>Memory-Mapped (mmap) Index</strong>: For gigantic corpora, loading the entire <code>HashMap</code> into memory might consume too much RAM. Implementing a read-only memory-mapped index structure can enable querying terabytes of hashes essentially for free using OS-level paging.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Le Duc Minh
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/MinLee0210/wavio" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
