@@ -111,3 +111,23 @@ lcov.info
 # Project-specific
 # ===========================
 /data/
+
+# ===========================
+# Python / PyO3 Setup
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Virtual Environments
+.env/
+.venv/
+venv/
+ENV/

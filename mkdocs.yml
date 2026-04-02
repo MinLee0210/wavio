@@ -1,0 +1,90 @@
+site_name: wavio
+site_description: Peak-based audio fingerprinting. Zero overhead. Written in Rust.
+site_url: https://minlee0210.github.io/wavio
+repo_url: https://github.com/MinLee0210/wavio
+repo_name: MinLee0210/wavio
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/MinLee0210/wavio
+
+copyright: Copyright &copy; 2026 Le Duc Minh
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+  - Python Guide:
+    - Overview: python/index.md
+    - API Reference: python/api.md
+    - Examples: python/examples.md
+  - Rust Guide:
+    - Overview: rust/index.md
+    - API Reference: rust/api.md
+    - Examples: rust/examples.md
+  - CLI: cli.md
+  - Reference:
+    - Configuration: reference/configuration.md
+    - Architecture: reference/architecture.md
+    - Benchmarks: reference/benchmarks.md
+    - Changelog: reference/changelog.md

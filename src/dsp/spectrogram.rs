@@ -11,6 +11,7 @@ use crate::error::WavioError;
 
 /// Configuration for spectrogram generation.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct SpectrogramConfig {
     /// Number of samples per FFT window. Must be a power of two.
     pub window_size: usize,

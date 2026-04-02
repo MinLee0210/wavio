@@ -15,4 +15,4 @@ mkdir -p "$DIR"
 curl -o "$DIR/sample.wav" "$URL"
 
 # Print a success message
-echo "Data samples downloaded to $DIR`
+echo "Data samples downloaded to $DIR"

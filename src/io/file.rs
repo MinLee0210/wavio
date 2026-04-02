@@ -1,3 +1,7 @@
+//! File-based audio reader.
+//!
+//! Implements [`IOReader`] for reading WAV files from the local filesystem.
+
 use super::base::IOReader;
 use crate::dsp::audio;
 use crate::error::WavioError;
