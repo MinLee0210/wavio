@@ -1,0 +1,3 @@
+[env]
+# Suppress PyO3 compilation error when compiling with Python interpreters newer than PyO3's max supported version (e.g. Python 3.14)
+PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1"
