@@ -46,6 +46,28 @@ impl Default for HashConfig {
     }
 }
 
+impl HashConfig {
+    /// Creates a new `HashConfig` with custom parameters.
+    #[must_use]
+    pub fn new(
+        fan_value: usize,
+        min_dt: f32,
+        max_dt: f32,
+        freq_bins: u32,
+        freq_resolution: f32,
+        dt_resolution: f32,
+    ) -> Self {
+        Self {
+            fan_value,
+            min_dt,
+            max_dt,
+            freq_bins,
+            freq_resolution,
+            dt_resolution,
+        }
+    }
+}
+
 /// A single fingerprint hash paired with its anchor time.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[non_exhaustive]
@@ -54,6 +76,14 @@ pub struct Fingerprint {
     pub hash: u64,
     /// Anchor time in seconds (the time of the first peak in the pair).
     pub anchor_time: f32,
+}
+
+impl Fingerprint {
+    /// Creates a new `Fingerprint`.
+    #[must_use]
+    pub fn new(hash: u64, anchor_time: f32) -> Self {
+        Self { hash, anchor_time }
+    }
 }
 
 /// Quantizes a frequency value (Hz) to a bin index.
@@ -102,6 +132,23 @@ fn pack_hash(freq1_bin: u32, freq2_bin: u32, delta_t: u32) -> u64 {
 /// # Returns
 ///
 /// A vector of `Fingerprint` values, each containing the hash and its anchor time.
+///
+/// # Examples
+///
+/// ```
+/// use wavio::dsp::peaks::Peak;
+/// use wavio::hash::{generate_hashes, HashConfig};
+///
+/// let peaks = vec![
+///     Peak::new(0.0, 440.0, -10.0),
+///     Peak::new(0.2, 880.0, -10.0),
+/// ];
+/// let config = HashConfig::default();
+/// let fingerprints = generate_hashes(&peaks, &config);
+///
+/// assert_eq!(fingerprints.len(), 1);
+/// assert_eq!(fingerprints[0].anchor_time, 0.0);
+/// ```
 #[must_use]
 pub fn generate_hashes(peaks: &[Peak], config: &HashConfig) -> Vec<Fingerprint> {
     if peaks.is_empty() {

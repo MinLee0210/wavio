@@ -39,13 +39,13 @@
 
 - [x] Implement WAV loader using `hound` — stereo → mono downmix, normalize to `f32`
 - [x] Write unit test: load a known WAV, assert sample count and sample rate
-- [ ] Add `symphonia` feature flag (`features = ["symphonia"]`) for MP3/AAC/FLAC
+- [x] Add `symphonia` feature flag (`features = ["symphonia"]`) for MP3/AAC/FLAC
 - [x] Implement `AudioSource` trait — abstraction over WAV and symphonia decoders
-- [ ] 🦀 Handle `symphonia`'s `Decoder` trait objects carefully — boxing required
-- [ ] Write integration test: load MP3 and WAV of same file, assert same sample length
-- [ ] Add resampling stub — note: full resampling deferred to Month 2
+- [x] 🦀 Handle `symphonia`'s `Decoder` trait objects carefully — boxing required
+- [x] Write integration test: load MP3 and WAV of same file, assert same sample length
+- [x] Add resampling stub — note: full resampling deferred to Month 2
 - [x] ⚠️ Decide on internal sample rate standard (recommend: 22,050 Hz) — document this decision in `ARCHITECTURE.md`
-- [~] **Milestone:** Can load WAV and MP3 files into a normalized `Vec<f32>`
+- [x] **Milestone:** Can load WAV and MP3 files into a normalized `Vec<f32>`
 
 ---
 
@@ -190,34 +190,34 @@
 
 ### Week 11 — Documentation & API Polish (~10 hrs)
 
-- [ ] Write `//!` crate-level doc comment in `lib.rs` — overview, quick example, feature flags
-- [ ] Write `///` doc comments on every public struct, trait, and function
-- [ ] Add `# Examples` sections to all public functions — `cargo test --doc` must pass
-- [ ] Run `cargo doc --open` — fix any broken links or missing docs
-- [ ] Write `ARCHITECTURE.md`:
+- [x] Write `//!` crate-level doc comment in `lib.rs` — overview, quick example, feature flags
+- [x] Write `///` doc comments on every public struct, trait, and function
+- [x] Add `# Examples` sections to all public functions — `cargo test --doc` must pass
+- [x] Run `cargo doc --open` — fix any broken links or missing docs
+- [x] Write `ARCHITECTURE.md`:
   - ASCII pipeline diagram
   - Design decisions and rationale (sample rate, FFT size, hash bit-packing)
   - Known limitations section
-- [ ] Update `README.md` — add real benchmark numbers, installation, CLI usage
-- [ ] Add `CHANGELOG.md` following Keep a Changelog format
-- [ ] Review public API — rename anything ambiguous, seal internal traits with `pub(crate)`
-- [ ] Run `cargo clippy -- -W clippy::pedantic`, fix all warnings
-- [ ] ⚠️ Add `#[non_exhaustive]` on enums/structs you may extend — prevents breaking changes in v0.2
-- [ ] **Milestone:** `cargo doc` is complete, zero warnings, all doc tests pass
+- [x] Update `README.md` — add real benchmark numbers, installation, CLI usage
+- [x] Add `CHANGELOG.md` following Keep a Changelog format
+- [x] Review public API — rename anything ambiguous, seal internal traits with `pub(crate)`
+- [x] Run `cargo clippy -- -W clippy::pedantic`, fix all warnings
+- [x] ⚠️ Add `#[non_exhaustive]` on enums/structs you may extend — prevents breaking changes in v0.2
+- [x] **Milestone:** `cargo doc` is complete, zero warnings, all doc tests pass
 
 ---
 
 ### Week 12 — Testing, Hardening & Publish (~10 hrs)
 
-- [ ] Write property-based tests with `proptest`:
+- [x] Write property-based tests with `proptest`:
   - Fingerprinting is deterministic across runs
   - Query always returns `None` for empty index
   - Score is monotonically higher for longer matching clips
-- [ ] Set up code coverage with `cargo-tarpaulin` — target > 70%
-- [ ] Test on Linux + macOS via GitHub Actions matrix build
+- [x] Set up code coverage with `cargo-tarpaulin` — target > 70%
+- [x] Test on Linux + macOS via GitHub Actions matrix build
 - [ ] Run `cargo audit` — fix any known vulnerability advisories
-- [ ] Pin MSRV in `Cargo.toml`: `rust-version = "1.75.0"`
-- [ ] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
+- [x] Pin MSRV in `Cargo.toml`: `rust-version = "1.85.0"`
+- [x] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
 - [ ] Tag `v0.1.0`, write GitHub release notes
 - [ ] Publish to `crates.io`: `cargo publish`
 - [ ] Announce on r/rust, This Week in Rust submissions, Hacker News (Show HN)

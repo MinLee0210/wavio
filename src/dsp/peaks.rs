@@ -21,6 +21,18 @@ pub struct Peak {
     pub amplitude: f32,
 }
 
+impl Peak {
+    /// Creates a new `Peak`.
+    #[must_use]
+    pub fn new(time: f32, freq: f32, amplitude: f32) -> Self {
+        Self {
+            time,
+            freq,
+            amplitude,
+        }
+    }
+}
+
 /// Configuration for the peak extraction algorithm.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
@@ -53,6 +65,26 @@ impl Default for PeakExtractorConfig {
 }
 
 impl PeakExtractorConfig {
+    /// Creates a new `PeakExtractorConfig` with custom parameters.
+    #[must_use]
+    pub fn new(
+        time_neighborhood: usize,
+        freq_neighborhood: usize,
+        threshold_db: f32,
+        sample_rate: u32,
+        hop_size: usize,
+        window_size: usize,
+    ) -> Self {
+        Self {
+            time_neighborhood,
+            freq_neighborhood,
+            threshold_db,
+            sample_rate,
+            hop_size,
+            window_size,
+        }
+    }
+
     /// Frequency resolution: Hz per bin.
     #[must_use]
     #[allow(clippy::cast_precision_loss)]
@@ -81,6 +113,22 @@ impl PeakExtractorConfig {
 ///
 /// * `spectrogram` -- dB power spectrogram of shape `[n_frames, n_bins]`.
 /// * `config` -- tuning parameters for extraction.
+///
+/// # Examples
+///
+/// ```
+/// use ndarray::Array2;
+/// use wavio::dsp::peaks::{extract_peaks, PeakExtractorConfig};
+///
+/// // Create an empty spectrogram with a single injected peak
+/// let mut spec = Array2::<f32>::from_elem((50, 129), -100.0);
+/// spec[[25, 64]] = -10.0;
+///
+/// let config = PeakExtractorConfig::new(5, 5, -40.0, 22050, 512, 2048);
+/// let peaks = extract_peaks(&spec, &config);
+/// assert_eq!(peaks.len(), 1);
+/// assert_eq!(peaks[0].amplitude, -10.0);
+/// ```
 #[must_use]
 #[allow(clippy::cast_precision_loss)]
 pub fn extract_peaks(spectrogram: &Array2<f32>, config: &PeakExtractorConfig) -> Vec<Peak> {

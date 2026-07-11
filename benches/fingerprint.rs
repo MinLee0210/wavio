@@ -10,9 +10,8 @@
 //! - `query_1k`:           run 1,000 queries against a pre-built 1k-track index.
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use wavio::dsp::peaks::{PeakExtractorConfig, extract_peaks};
-use wavio::dsp::spectrogram::{SpectrogramConfig, compute_spectrogram};
-use wavio::hash::{Fingerprint, HashConfig, generate_hashes};
+use wavio::dsp::Fingerprinter;
+use wavio::hash::Fingerprint;
 use wavio::index::Index;
 
 // ---------------------------------------------------------------------------
@@ -35,13 +34,8 @@ fn synthetic_samples(duration_secs: f32, sample_rate: u32) -> Vec<f32> {
 
 /// Runs the full DSP pipeline on `samples` and returns fingerprints.
 fn fingerprint(samples: &[f32]) -> Vec<Fingerprint> {
-    let spec_cfg = SpectrogramConfig::default();
-    let peak_cfg = PeakExtractorConfig::default();
-    let hash_cfg = HashConfig::default();
-
-    let spec = compute_spectrogram(samples, &spec_cfg).expect("spectrogram failed");
-    let peaks = extract_peaks(&spec, &peak_cfg);
-    generate_hashes(&peaks, &hash_cfg)
+    let fingerprinter = Fingerprinter::default();
+    fingerprinter.fingerprint(samples).expect("fingerprint failed")
 }
 
 /// Builds a batch of 1,000 synthetic fingerprint sets (one per "track").

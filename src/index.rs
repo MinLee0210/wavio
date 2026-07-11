@@ -85,6 +85,14 @@ impl Default for IndexConfig {
     }
 }
 
+impl IndexConfig {
+    /// Creates a new `IndexConfig`.
+    #[must_use]
+    pub fn new(offset_bin_size: f32) -> Self {
+        Self { offset_bin_size }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // In-memory index
 // ---------------------------------------------------------------------------
@@ -118,6 +126,12 @@ impl Index {
         }
     }
 
+    /// Returns a reference to the index configuration.
+    #[must_use]
+    pub fn config(&self) -> &IndexConfig {
+        &self.config
+    }
+
     /// Returns the number of indexed tracks.
     #[must_use]
     pub fn track_count(&self) -> usize {
@@ -134,6 +148,22 @@ impl Index {
     ///
     /// If a track with the same name already exists, additional
     /// fingerprints are appended (no deduplication).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::hash::Fingerprint;
+    /// use wavio::index::Index;
+    ///
+    /// let mut index = Index::default();
+    /// let fps = vec![
+    ///     Fingerprint::new(12345, 0.0),
+    ///     Fingerprint::new(67890, 0.5),
+    /// ];
+    /// index.insert("my_song", &fps);
+    ///
+    /// assert_eq!(index.track_count(), 1);
+    /// ```
     pub fn insert(&mut self, track_name: &str, fingerprints: &[Fingerprint]) {
         let track_id = self.tracks.get_or_insert(track_name);
 
@@ -155,6 +185,27 @@ impl Index {
     /// 4. The track with the tallest histogram bin wins.
     ///
     /// Returns `None` if no matching hashes are found.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::hash::Fingerprint;
+    /// use wavio::index::Index;
+    ///
+    /// let mut index = Index::default();
+    /// let fps = vec![
+    ///     Fingerprint::new(12345, 0.0),
+    ///     Fingerprint::new(67890, 0.5),
+    /// ];
+    /// index.insert("my_song", &fps);
+    ///
+    /// let query_fps = vec![
+    ///     Fingerprint::new(12345, 0.0),
+    /// ];
+    /// let result = index.query(&query_fps).unwrap();
+    /// assert_eq!(result.track_id, "my_song");
+    /// assert_eq!(result.score, 1);
+    /// ```
     #[must_use]
     pub fn query(&self, fingerprints: &[Fingerprint]) -> Option<QueryResult> {
         if fingerprints.is_empty() {

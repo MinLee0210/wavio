@@ -1,0 +1,13 @@
+[report]
+# Output format for coverage reports (generate HTML and XML/Cobertura reports)
+out = ["Html", "Xml"]
+
+# Exclude python bindings, benchmarks, and integration test suites from core library coverage
+exclude-files = [
+    "src/python.rs",
+    "benches/*",
+    "tests/*",
+]
+
+# Set the target coverage percentage
+fail-under = 70.0

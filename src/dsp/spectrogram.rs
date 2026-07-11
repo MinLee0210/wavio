@@ -28,6 +28,17 @@ impl Default for SpectrogramConfig {
     }
 }
 
+impl SpectrogramConfig {
+    /// Creates a new `SpectrogramConfig`.
+    #[must_use]
+    pub fn new(window_size: usize, hop_size: usize) -> Self {
+        Self {
+            window_size,
+            hop_size,
+        }
+    }
+}
+
 /// Generates a Hann window of the given length.
 ///
 /// The Hann window tapers the edges of each frame to reduce spectral
@@ -58,6 +69,18 @@ pub fn hann_window(size: usize) -> Vec<f32> {
 ///
 /// - [`WavioError::SpectrogramError`] if the input is shorter than one window.
 /// - [`WavioError::SpectrogramError`] if `window_size` is zero or `hop_size` is zero.
+///
+/// # Examples
+///
+/// ```
+/// use wavio::dsp::spectrogram::{compute_spectrogram, SpectrogramConfig};
+///
+/// let config = SpectrogramConfig::new(256, 128);
+/// let samples = vec![0.0; 1024];
+/// let spec = compute_spectrogram(&samples, &config).unwrap();
+///
+/// assert_eq!(spec.shape(), &[7, 129]);
+/// ```
 pub fn compute_spectrogram(
     samples: &[f32],
     config: &SpectrogramConfig,
@@ -211,11 +234,7 @@ mod tests {
             .0;
 
         // Allow a tolerance of +/- 2 bins due to spectral leakage.
-        let diff = if max_bin > expected_bin {
-            max_bin - expected_bin
-        } else {
-            expected_bin - max_bin
-        };
+        let diff = max_bin.abs_diff(expected_bin);
         assert!(
             diff <= 2,
             "Expected peak near bin {expected_bin}, found at bin {max_bin}"

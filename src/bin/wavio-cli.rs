@@ -3,10 +3,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use wavio::dsp::audio::load_wav;
-use wavio::dsp::peaks::{extract_peaks, PeakExtractorConfig};
-use wavio::dsp::spectrogram::{compute_spectrogram, SpectrogramConfig};
-use wavio::hash::{generate_hashes, Fingerprint, HashConfig};
+use wavio::dsp::Fingerprinter;
+use wavio::hash::Fingerprint;
 use wavio::index::Index;
 
 #[cfg(feature = "parallel")]
@@ -54,17 +52,8 @@ enum Commands {
 }
 
 fn fingerprint_file(path: &Path) -> anyhow::Result<Vec<Fingerprint>> {
-    let audio = load_wav(path.to_str().unwrap())?;
-    
-    let spec_config = SpectrogramConfig::default();
-    let spec = compute_spectrogram(&audio.samples, &spec_config)?;
-
-    let peak_config = PeakExtractorConfig::default();
-    let peaks = extract_peaks(&spec, &peak_config);
-
-    let hash_config = HashConfig::default();
-    let hashes = generate_hashes(&peaks, &hash_config);
-
+    let fingerprinter = Fingerprinter::default();
+    let hashes = fingerprinter.fingerprint_file(path.to_str().unwrap())?;
     Ok(hashes)
 }
 
@@ -79,8 +68,14 @@ fn main() -> anyhow::Result<()> {
                     let entry = entry?;
                     let path = entry.path();
                     if path.is_file() {
-                        if let Some(ext) = path.extension() {
-                            if ext == "wav" {
+                        if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                            let ext_lower = ext.to_lowercase();
+                            let is_supported = if cfg!(feature = "symphonia") {
+                                matches!(ext_lower.as_str(), "wav" | "mp3" | "flac" | "m4a" | "aac" | "ogg")
+                            } else {
+                                ext_lower == "wav"
+                            };
+                            if is_supported {
                                 files.push(path);
                             }
                         }
