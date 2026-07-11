@@ -218,11 +218,11 @@
 - [ ] Run `cargo audit` — fix any known vulnerability advisories
 - [x] Pin MSRV in `Cargo.toml`: `rust-version = "1.85.0"`
 - [x] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
-- [ ] Tag `v0.1.0`, write GitHub release notes
-- [ ] Publish to `crates.io`: `cargo publish`
+- [x] Tag `v0.1.0`, write GitHub release notes
+- [x] Publish to `crates.io`: `cargo publish`
 - [ ] Announce on r/rust, This Week in Rust submissions, Hacker News (Show HN)
 - [ ] ⚠️ `crates.io` publishes are permanent and immutable — double-check before publishing
-- [ ] **Milestone:** `wavio = "0.1"` works in any Rust project worldwide 🎉
+- [x] **Milestone:** `wavio = "0.1"` works in any Rust project worldwide 🎉
 
 ---
 
