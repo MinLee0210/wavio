@@ -6,6 +6,11 @@ use std::path::Path;
 use crate::error::WavioError;
 
 /// Supported audio file extensions.
+#[cfg(feature = "symphonia")]
+const SUPPORTED_EXTENSIONS: &[&str] = &["wav", "mp3", "flac", "m4a", "aac", "ogg"];
+
+/// Supported audio file extensions.
+#[cfg(not(feature = "symphonia"))]
 const SUPPORTED_EXTENSIONS: &[&str] = &["wav"];
 
 /// Validates that a file path points to a readable, supported audio file.

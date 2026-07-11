@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     branches:
       - main
-      - dev
 
 env:
   CARGO_TERM_COLOR: always
@@ -41,27 +39,22 @@ jobs:
 
   # Run tests
   test:
-    name: Tests
-    runs-on: ubuntu-latest
+    name: Tests (${{ matrix.os }}, features="${{ matrix.features }}")
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          # Test with no features
-          - rust: stable
-            features: ""
-          # Test with all features
-          - rust: stable
-            features: "persist"
+        os: [ubuntu-latest, macos-latest]
+        features: ["", "persist"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Run tests (no features)
         if: matrix.features == ''
-        run: cargo test --lib --verbose
+        run: cargo test --verbose
       - name: Run tests (with features)
         if: matrix.features != ''
-        run: cargo test --lib --all-features --verbose
+        run: cargo test --all-features --verbose
       - name: Run doc tests
         run: cargo test --doc --all-features
 
@@ -71,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rustsec/audit-check-action@v1
+      - uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 

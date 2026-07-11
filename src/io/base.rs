@@ -1,3 +1,7 @@
+//! Base I/O trait for reading audio samples.
+//!
+//! Defines the [`IOReader`] trait that all audio source backends implement.
+
 use crate::error::WavioError;
 
 /// Trait for reading audio data from a source into normalized `f32` samples.

@@ -8,8 +8,13 @@
 
 use crate::dsp::peaks::Peak;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
+
 /// Configuration for the combinatorial hashing algorithm.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct HashConfig {
     /// Maximum number of target peaks to pair with each anchor peak.
     pub fan_value: usize,
@@ -41,13 +46,44 @@ impl Default for HashConfig {
     }
 }
 
+impl HashConfig {
+    /// Creates a new `HashConfig` with custom parameters.
+    #[must_use]
+    pub fn new(
+        fan_value: usize,
+        min_dt: f32,
+        max_dt: f32,
+        freq_bins: u32,
+        freq_resolution: f32,
+        dt_resolution: f32,
+    ) -> Self {
+        Self {
+            fan_value,
+            min_dt,
+            max_dt,
+            freq_bins,
+            freq_resolution,
+            dt_resolution,
+        }
+    }
+}
+
 /// A single fingerprint hash paired with its anchor time.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[non_exhaustive]
 pub struct Fingerprint {
     /// The combinatorial hash value.
     pub hash: u64,
     /// Anchor time in seconds (the time of the first peak in the pair).
     pub anchor_time: f32,
+}
+
+impl Fingerprint {
+    /// Creates a new `Fingerprint`.
+    #[must_use]
+    pub fn new(hash: u64, anchor_time: f32) -> Self {
+        Self { hash, anchor_time }
+    }
 }
 
 /// Quantizes a frequency value (Hz) to a bin index.
@@ -96,6 +132,23 @@ fn pack_hash(freq1_bin: u32, freq2_bin: u32, delta_t: u32) -> u64 {
 /// # Returns
 ///
 /// A vector of `Fingerprint` values, each containing the hash and its anchor time.
+///
+/// # Examples
+///
+/// ```
+/// use wavio::dsp::peaks::Peak;
+/// use wavio::hash::{generate_hashes, HashConfig};
+///
+/// let peaks = vec![
+///     Peak::new(0.0, 440.0, -10.0),
+///     Peak::new(0.2, 880.0, -10.0),
+/// ];
+/// let config = HashConfig::default();
+/// let fingerprints = generate_hashes(&peaks, &config);
+///
+/// assert_eq!(fingerprints.len(), 1);
+/// assert_eq!(fingerprints[0].anchor_time, 0.0);
+/// ```
 #[must_use]
 pub fn generate_hashes(peaks: &[Peak], config: &HashConfig) -> Vec<Fingerprint> {
     if peaks.is_empty() {
@@ -145,6 +198,74 @@ pub fn generate_hashes(peaks: &[Peak], config: &HashConfig) -> Vec<Fingerprint> 
     }
 
     fingerprints
+}
+
+/// Parallel variant of [`generate_hashes`] using `rayon`.
+///
+/// Distributes anchor-level pairing across the thread pool. Each anchor's
+/// target-pair computation is independent (read-only access to `sorted_peaks`),
+/// making this safely parallelizable. The final hash list is identical to the
+/// serial version modulo ordering (both are unsorted; callers should not rely
+/// on order).
+///
+/// Requires the `parallel` feature flag.
+///
+/// # Arguments
+///
+/// * `peaks` -- Constellation peaks extracted from a spectrogram.
+/// * `config` -- Tuning parameters for hash generation.
+#[cfg(feature = "parallel")]
+#[must_use]
+pub fn generate_hashes_parallel(peaks: &[Peak], config: &HashConfig) -> Vec<Fingerprint> {
+    if peaks.is_empty() {
+        return Vec::new();
+    }
+
+    let mut sorted_peaks = peaks.to_vec();
+    sorted_peaks.sort_by(|a, b| {
+        a.time
+            .partial_cmp(&b.time)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // Each anchor produces its own sub-vec of Fingerprints independently.
+    sorted_peaks
+        .par_iter()
+        .enumerate()
+        .flat_map(|(i, anchor)| {
+            let mut local = Vec::new();
+            let mut fan_count = 0;
+
+            for target in sorted_peaks.iter().skip(i + 1) {
+                if fan_count >= config.fan_value {
+                    break;
+                }
+
+                let dt = target.time - anchor.time;
+
+                if dt < config.min_dt {
+                    continue;
+                }
+                if dt > config.max_dt {
+                    break;
+                }
+
+                let f1_bin = freq_to_bin(anchor.freq, config.freq_resolution, config.freq_bins);
+                let f2_bin = freq_to_bin(target.freq, config.freq_resolution, config.freq_bins);
+                let dt_q = quantize_dt(dt, config.dt_resolution);
+                let hash = pack_hash(f1_bin, f2_bin, dt_q);
+
+                local.push(Fingerprint {
+                    hash,
+                    anchor_time: anchor.time,
+                });
+
+                fan_count += 1;
+            }
+
+            local
+        })
+        .collect()
 }
 
 #[cfg(test)]

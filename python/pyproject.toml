@@ -1,0 +1,23 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "wavio"
+requires-python = ">=3.8"
+description = "Peak-based audio fingerprinting."
+readme = "../README.md"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.maturin]
+features = ["python", "persist", "parallel"]
+module-name = "wavio.wavio"

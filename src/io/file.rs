@@ -1,3 +1,7 @@
+//! File-based audio reader.
+//!
+//! Implements [`IOReader`] for reading WAV files from the local filesystem.
+
 use super::base::IOReader;
 use crate::dsp::audio;
 use crate::error::WavioError;
@@ -16,8 +20,8 @@ impl IOReader for FileIOReader {
         // Validate the file first (exists, supported extension, readable).
         utils::validate_audio_file(&self.filepath)?;
 
-        // Load and decode the WAV file.
-        let audio_data = audio::load_wav(&self.filepath)?;
+        // Load and decode the audio file.
+        let audio_data = audio::load_audio(&self.filepath)?;
         Ok(audio_data.samples)
     }
 }

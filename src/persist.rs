@@ -1,20 +1,28 @@
-//! On-disk persistence for fingerprint indices using `sled`.
+//! On-disk persistence for fingerprint indices using `redb`.
 //!
-//! This module provides `PersistentIndex` — a wrapper around `sled::Db`
+//! This module provides `PersistentIndex` — a wrapper around `redb::Database`
 //! that stores fingerprints persistently while maintaining the same query
 //! interface as the in-memory `Index`.
 //!
+//! # Backend Status
+//!
+//! **Note:** This module has been migrated from `sled` to `redb`. `redb` is
+//! an embedded key-value store written in pure, safe Rust. It offers
+//! ACID transactions and B-tree storage layout, ensuring durability and
+//! memory safety.
+//!
 //! # Disk Layout
 //!
-//! The persistent index uses three sled trees:
-//! - `hashes`: Maps from `u64` hash (as big-endian bytes) to bincode-encoded
-//!   `Vec<(u32, f32)>` (TrackId, anchor_time) pairs.
-//! - `tracks_by_name`: Maps track name to track ID.
-//! - `tracks_by_id`: Maps track ID (as bytes) to track name.
+//! The persistent index uses four redb tables:
+//! - `hashes`: Maps from `u64` hash to bincode-encoded `Vec<(u32, f32)>` (TrackId, anchor_time) pairs.
+//! - `tracks_by_name`: Maps track name (&str) to track ID (u32).
+//! - `tracks_by_id`: Maps track ID (u32) to track name (&str).
 //! - `metadata`: Stores configuration and the next available TrackId.
 
 use std::collections::HashMap;
 use std::path::Path;
+
+use redb::{Database, TableDefinition, ReadableTable, ReadableTableMetadata};
 
 use crate::error::WavioError;
 use crate::hash::Fingerprint;
@@ -23,20 +31,22 @@ use crate::index::{Index, IndexConfig, QueryResult, TrackId};
 // Type alias for convenience
 type WavioResult<T> = Result<T, WavioError>;
 
+// Table Definitions
+const HASHES: TableDefinition<u64, &[u8]> = TableDefinition::new("hashes");
+const TRACKS_BY_NAME: TableDefinition<&str, u32> = TableDefinition::new("tracks_by_name");
+const TRACKS_BY_ID: TableDefinition<u32, &str> = TableDefinition::new("tracks_by_id");
+const METADATA: TableDefinition<&str, &[u8]> = TableDefinition::new("metadata");
+
 // ---------------------------------------------------------------------------
 // Persistent Index
 // ---------------------------------------------------------------------------
 
-/// On-disk persistent fingerprint index backed by `sled`.
+/// On-disk persistent fingerprint index backed by `redb`.
 ///
 /// Provides the same query interface as `Index` but stores data persistently.
 #[derive(Debug)]
 pub struct PersistentIndex {
-    db: sled::Db,
-    hashes_tree: sled::Tree,
-    tracks_by_name: sled::Tree,  // name -> id
-    tracks_by_id: sled::Tree,    // id -> name
-    metadata_tree: sled::Tree,
+    db: Database,
     config: IndexConfig,
 }
 
@@ -45,53 +55,62 @@ impl PersistentIndex {
     ///
     /// # Errors
     ///
-    /// Returns an error if the database cannot be opened.
+    /// Returns an error if the database cannot be opened or initialized.
     pub fn open<P: AsRef<Path>>(path: P) -> WavioResult<Self> {
-        let db = sled::open(path).map_err(|e| WavioError::IoError(e.to_string()))?;
-
-        let hashes_tree = db.open_tree("hashes").map_err(|e| WavioError::IoError(e.to_string()))?;
-
-        let tracks_by_name = db.open_tree("tracks_by_name").map_err(|e| WavioError::IoError(e.to_string()))?;
-
-        let tracks_by_id = db.open_tree("tracks_by_id").map_err(|e| WavioError::IoError(e.to_string()))?;
-
-        let metadata_tree = db.open_tree("metadata").map_err(|e| WavioError::IoError(e.to_string()))?;
-
-        // Load configuration from metadata, or use default.
-        let config = if let Some(config_bytes) = metadata_tree.get("config").ok().flatten() {
-            bincode::deserialize(&config_bytes).unwrap_or_default()
+        let path_ref = path.as_ref();
+        let db = if path_ref.exists() {
+            Database::open(path_ref).map_err(|e| WavioError::IoError(e.to_string()))?
         } else {
-            IndexConfig::default()
+            if let Some(parent) = path_ref.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            Database::create(path_ref).map_err(|e| WavioError::IoError(e.to_string()))?
         };
 
-        Ok(Self {
-            db,
-            hashes_tree,
-            tracks_by_name,
-            tracks_by_id,
-            metadata_tree,
-            config,
-        })
+        // Initialize tables by starting a write transaction
+        let write_txn = db.begin_write().map_err(|e| WavioError::IoError(e.to_string()))?;
+        let config = {
+            // Open tables to ensure they are created
+            let _hashes = write_txn.open_table(HASHES).map_err(|e| WavioError::IoError(e.to_string()))?;
+            let _tracks_by_name = write_txn.open_table(TRACKS_BY_NAME).map_err(|e| WavioError::IoError(e.to_string()))?;
+            let _tracks_by_id = write_txn.open_table(TRACKS_BY_ID).map_err(|e| WavioError::IoError(e.to_string()))?;
+
+            let metadata = write_txn.open_table(METADATA).map_err(|e| WavioError::IoError(e.to_string()))?;
+            if let Some(config_bytes) = metadata.get("config").map_err(|e| WavioError::IoError(e.to_string()))? {
+                bincode::deserialize(config_bytes.value()).unwrap_or_default()
+            } else {
+                IndexConfig::default()
+            }
+        };
+        write_txn.commit().map_err(|e| WavioError::IoError(e.to_string()))?;
+
+        Ok(Self { db, config })
     }
 
     /// Returns the number of indexed tracks.
     #[must_use]
     pub fn track_count(&self) -> usize {
-        self.tracks_by_id.iter().count()
+        let Ok(read_txn) = self.db.begin_read() else { return 0; };
+        let Ok(t_id) = read_txn.open_table(TRACKS_BY_ID) else { return 0; };
+        let Ok(len) = t_id.len() else { return 0; };
+        len as usize
     }
 
     /// Returns the total number of hash entries across all tracks.
     #[must_use]
     pub fn hash_count(&self) -> usize {
-        self.hashes_tree
-            .iter()
-            .filter_map(Result::ok)
-            .map(|(_, val)| {
-                bincode::deserialize::<Vec<(TrackId, f32)>>(&val)
-                    .map(|v| v.len())
-                    .unwrap_or(0)
-            })
-            .sum()
+        let Ok(read_txn) = self.db.begin_read() else { return 0; };
+        let Ok(hashes) = read_txn.open_table(HASHES) else { return 0; };
+        let Ok(iter) = hashes.iter() else { return 0; };
+        let mut count = 0;
+        for item in iter {
+            if let Ok((_, val)) = item {
+                if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(val.value()) {
+                    count += entries.len();
+                }
+            }
+        }
+        count
     }
 
     /// Inserts a track's fingerprints into the index.
@@ -100,96 +119,82 @@ impl PersistentIndex {
     ///
     /// Returns an error if persistence operations fail.
     pub fn insert(&mut self, track_name: &str, fingerprints: &[Fingerprint]) -> WavioResult<()> {
-        // Allocate a new TrackId if this is a new track.
-        let next_id_key = b"next_id";
-        let current_next_id: TrackId = self
-            .metadata_tree
-            .get(next_id_key)
-            .ok()
-            .flatten()
-            .and_then(|bytes| {
-                if bytes.len() == 4 {
-                    Some(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
-                } else {
-                    None
-                }
-            })
-            .unwrap_or(0);
+        let write_txn = self.db.begin_write().map_err(|e| WavioError::IoError(e.to_string()))?;
 
-        let track_id = if let Some(stored_id_bytes) = self
-            .tracks_by_name
-            .get(track_name)
-            .ok()
-            .flatten()
-        {
-            u32::from_le_bytes([stored_id_bytes[0], stored_id_bytes[1], stored_id_bytes[2], stored_id_bytes[3]])
-        } else {
-            let new_id = current_next_id;
-            // Store bidirectional mapping
-            self.tracks_by_name
-                .insert(track_name, new_id.to_le_bytes().to_vec())
-                .map_err(|e| WavioError::IoError(e.to_string()))?;
+        let track_id = {
+            let mut metadata = write_txn.open_table(METADATA).map_err(|e| WavioError::IoError(e.to_string()))?;
+            let mut tracks_by_name = write_txn.open_table(TRACKS_BY_NAME).map_err(|e| WavioError::IoError(e.to_string()))?;
+            let mut tracks_by_id = write_txn.open_table(TRACKS_BY_ID).map_err(|e| WavioError::IoError(e.to_string()))?;
 
-            self.tracks_by_id
-                .insert(new_id.to_le_bytes().to_vec(), track_name)
-                .map_err(|e| WavioError::IoError(e.to_string()))?;
+            let current_next_id: TrackId = metadata
+                .get("next_id")
+                .map_err(|e| WavioError::IoError(e.to_string()))?
+                .and_then(|val| {
+                    let bytes = val.value();
+                    if bytes.len() == 4 {
+                        Some(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(0);
 
-            self.metadata_tree
-                .insert(next_id_key, (new_id + 1).to_le_bytes().to_vec())
-                .map_err(|e| WavioError::IoError(e.to_string()))?;
-
-            new_id
+            if let Some(stored_id) = tracks_by_name.get(track_name).map_err(|e| WavioError::IoError(e.to_string()))? {
+                stored_id.value()
+            } else {
+                let new_id = current_next_id;
+                tracks_by_name.insert(track_name, new_id).map_err(|e| WavioError::IoError(e.to_string()))?;
+                tracks_by_id.insert(new_id, track_name).map_err(|e| WavioError::IoError(e.to_string()))?;
+                
+                let next_id_bytes = (new_id + 1).to_le_bytes();
+                metadata.insert("next_id", next_id_bytes.as_slice()).map_err(|e| WavioError::IoError(e.to_string()))?;
+                new_id
+            }
         };
 
-        // Insert fingerprints into the hash table.
-        for fp in fingerprints {
-            let key = fp.hash.to_be_bytes();
+        // Insert fingerprints into the hashes table
+        {
+            let mut hashes = write_txn.open_table(HASHES).map_err(|e| WavioError::IoError(e.to_string()))?;
+            for fp in fingerprints {
+                let key = fp.hash;
+                let mut entries = if let Some(val) = hashes.get(key).map_err(|e| WavioError::IoError(e.to_string()))? {
+                    bincode::deserialize(val.value()).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
 
-            let mut entries = if let Some(val) = self
-                .hashes_tree
-                .get(&key)
-                .map_err(|e| WavioError::IoError(e.to_string()))?
-            {
-                bincode::deserialize(&val).unwrap_or_default()
-            } else {
-                Vec::new()
-            };
-
-            entries.push((track_id, fp.anchor_time));
-            let encoded = bincode::serialize(&entries).map_err(|e| WavioError::IndexError(e.to_string()))?;
-
-            self.hashes_tree
-                .insert(&key, encoded)
-                .map_err(|e| WavioError::IoError(e.to_string()))?;
+                entries.push((track_id, fp.anchor_time));
+                let encoded = bincode::serialize(&entries).map_err(|e| WavioError::IndexError(e.to_string()))?;
+                hashes.insert(key, encoded.as_slice()).map_err(|e| WavioError::IoError(e.to_string()))?;
+            }
         }
 
+        write_txn.commit().map_err(|e| WavioError::IoError(e.to_string()))?;
         Ok(())
     }
 
     /// Queries the index with a set of fingerprints and returns the
     /// best-matching track, if any.
     ///
-    /// Uses the same algorithm as the in-memory `Index`:
-    /// 1. For each query fingerprint, look up matching entries.
-    /// 2. Compute time offsets and quantize into histogram bins.
-    /// 3. Return the track with the highest histogram peak.
-    ///
     /// # Errors
     ///
-    /// Returns an error if persistence operations fail.
+    /// Returns `None` if no matching hashes are found or query fails.
     #[must_use]
     pub fn query(&self, fingerprints: &[Fingerprint]) -> Option<QueryResult> {
         if fingerprints.is_empty() {
             return None;
         }
 
+        let read_txn = self.db.begin_read().ok()?;
+        let hashes = read_txn.open_table(HASHES).ok()?;
+
         // Per-track histogram: track_id -> (offset_bin -> count)
         let mut histograms: HashMap<TrackId, HashMap<i64, u32>> = HashMap::new();
 
         for fp in fingerprints {
-            let key = fp.hash.to_be_bytes();
-            if let Ok(Some(val)) = self.hashes_tree.get(&key) {
-                if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(&val) {
+            let key = fp.hash;
+            if let Ok(Some(val)) = hashes.get(key) {
+                if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(val.value()) {
                     for (track_id, db_time) in entries {
                         let offset = db_time - fp.anchor_time;
                         let bin = self.offset_to_bin(offset);
@@ -204,7 +209,7 @@ impl PersistentIndex {
             }
         }
 
-        // Find the track and bin with the highest count.
+        // Find the track and bin with the highest count
         let mut best_track: Option<TrackId> = None;
         let mut best_score: u32 = 0;
         let mut best_bin: i64 = 0;
@@ -220,7 +225,7 @@ impl PersistentIndex {
         }
 
         best_track.and_then(|tid| {
-            self.track_name(tid)
+            self.track_name_with_txn(&read_txn, tid)
                 .map(|name| QueryResult {
                     track_id: name,
                     score: best_score,
@@ -229,25 +234,21 @@ impl PersistentIndex {
         })
     }
 
-    /// Persists pending updates to disk. Normally happens automatically,
-    /// but you can call this to ensure durability.
+    /// Persists pending updates to disk. Since `redb` commits are durable on write,
+    /// this is a no-op that returns `Ok(())`.
     ///
     /// # Errors
     ///
-    /// Returns an error if the flush operation fails.
+    /// Always returns `Ok(())`.
     pub fn flush(&mut self) -> WavioResult<()> {
-        self.db.flush().map_err(|e| WavioError::IoError(e.to_string()))?;
         Ok(())
     }
 
-    /// Retrieves the track name for a given TrackId.
-    #[must_use]
-    fn track_name(&self, track_id: TrackId) -> Option<String> {
-        self.tracks_by_id
-            .get(track_id.to_le_bytes().to_vec())
-            .ok()
-            .flatten()
-            .and_then(|v| String::from_utf8(v.to_vec()).ok())
+    /// Retrieves the track name for a given TrackId using an active transaction.
+    fn track_name_with_txn(&self, read_txn: &redb::ReadTransaction, track_id: TrackId) -> Option<String> {
+        let tracks_by_id = read_txn.open_table(TRACKS_BY_ID).ok()?;
+        let val = tracks_by_id.get(track_id).ok()??;
+        Some(val.value().to_string())
     }
 
     /// Quantizes a time offset (seconds) into a histogram bin index.
@@ -264,31 +265,25 @@ impl PersistentIndex {
 
     /// Loads the persistent index into memory as an in-memory `Index`.
     ///
-    /// This enables the hybrid approach: load from disk once, query in memory.
-    ///
     /// # Errors
     ///
-    /// Returns an error if persistence operations fail.
+    /// Returns an error if database read fails.
     pub fn load_into_memory(&self) -> WavioResult<Index> {
         let mut in_memory_index = Index::new(self.config.clone());
+        let read_txn = self.db.begin_read().map_err(|e| WavioError::IoError(e.to_string()))?;
+        let hashes = read_txn.open_table(HASHES).map_err(|e| WavioError::IoError(e.to_string()))?;
 
-        // Iterate over all hash entries and load them into memory
-        for result in self.hashes_tree.iter() {
-            let (hash_bytes, val) = result.map_err(|e| WavioError::IoError(e.to_string()))?;
+        let iter = hashes.iter().map_err(|e| WavioError::IoError(e.to_string()))?;
+        for result in iter {
+            let (hash_guard, val_guard) = result.map_err(|e| WavioError::IoError(e.to_string()))?;
+            let hash = hash_guard.value();
+            let val = val_guard.value();
 
-            if hash_bytes.len() == 8 {
-                let hash = u64::from_be_bytes([
-                    hash_bytes[0], hash_bytes[1], hash_bytes[2], hash_bytes[3],
-                    hash_bytes[4], hash_bytes[5], hash_bytes[6], hash_bytes[7],
-                ]);
-
-                if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(&val) {
-                    for (track_id, anchor_time) in entries {
-                        // Look up track name by ID
-                        if let Some(track_name) = self.track_name(track_id) {
-                            let fp = Fingerprint { hash, anchor_time };
-                            in_memory_index.insert(&track_name, &[fp]);
-                        }
+            if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(val) {
+                for (track_id, anchor_time) in entries {
+                    if let Some(track_name) = self.track_name_with_txn(&read_txn, track_id) {
+                        let fp = Fingerprint::new(hash, anchor_time);
+                        in_memory_index.insert(&track_name, &[fp]);
                     }
                 }
             }
@@ -304,13 +299,22 @@ mod tests {
     use std::fs;
 
     fn fp(hash: u64, anchor_time: f32) -> Fingerprint {
-        Fingerprint { hash, anchor_time }
+        Fingerprint::new(hash, anchor_time)
+    }
+
+    fn cleanup(path: &str) {
+        let p = Path::new(path);
+        if p.is_file() {
+            let _ = fs::remove_file(p);
+        } else if p.is_dir() {
+            let _ = fs::remove_dir_all(p);
+        }
     }
 
     #[test]
     fn test_persistent_index_insert_and_query() {
-        let tmp_dir = "/tmp/wavio_test_persist_1";
-        let _ = fs::remove_dir_all(tmp_dir);
+        let tmp_dir = "target/wavio_test_persist_1";
+        cleanup(tmp_dir);
 
         {
             let mut index = PersistentIndex::open(tmp_dir).expect("failed to open db");
@@ -351,13 +355,13 @@ mod tests {
             assert_eq!(qr.score, 5);
         }
 
-        let _ = fs::remove_dir_all(tmp_dir);
+        cleanup(tmp_dir);
     }
 
     #[test]
     fn test_persistent_index_multiple_tracks() {
-        let tmp_dir = "/tmp/wavio_test_persist_multi";
-        let _ = fs::remove_dir_all(tmp_dir);
+        let tmp_dir = "target/wavio_test_persist_multi";
+        cleanup(tmp_dir);
 
         // Insert multiple tracks and verify persistence
         {
@@ -390,13 +394,13 @@ mod tests {
             assert_eq!(result.score, 10);
         }
 
-        let _ = fs::remove_dir_all(tmp_dir);
+        cleanup(tmp_dir);
     }
 
     #[test]
     fn test_persistent_and_memory_index_equivalence() {
-        let tmp_dir = "/tmp/wavio_test_equivalence";
-        let _ = fs::remove_dir_all(tmp_dir);
+        let tmp_dir = "target/wavio_test_equivalence";
+        cleanup(tmp_dir);
 
         let test_fps = vec![
             fp(1001, 0.0),
@@ -411,13 +415,13 @@ mod tests {
             mem_index.insert("test_song", &test_fps);
 
             mem_index
-                .save_to_disk(&tmp_dir)
+                .save_to_disk(tmp_dir)
                 .expect("failed to save to disk");
         }
 
         // Load from disk and verify equivalence
         {
-            let loaded_index = Index::load_from_disk(&tmp_dir).expect("failed to load from disk");
+            let loaded_index = Index::load_from_disk(tmp_dir).expect("failed to load from disk");
 
             let result = loaded_index.query(&test_fps);
             assert!(result.is_some());
@@ -426,6 +430,6 @@ mod tests {
             assert_eq!(qr.score, 4);
         }
 
-        let _ = fs::remove_dir_all(tmp_dir);
+        cleanup(tmp_dir);
     }
 }

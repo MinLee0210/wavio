@@ -11,6 +11,7 @@ use crate::error::WavioError;
 
 /// Configuration for spectrogram generation.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct SpectrogramConfig {
     /// Number of samples per FFT window. Must be a power of two.
     pub window_size: usize,
@@ -23,6 +24,17 @@ impl Default for SpectrogramConfig {
         Self {
             window_size: 2048,
             hop_size: 512,
+        }
+    }
+}
+
+impl SpectrogramConfig {
+    /// Creates a new `SpectrogramConfig`.
+    #[must_use]
+    pub fn new(window_size: usize, hop_size: usize) -> Self {
+        Self {
+            window_size,
+            hop_size,
         }
     }
 }
@@ -57,6 +69,18 @@ pub fn hann_window(size: usize) -> Vec<f32> {
 ///
 /// - [`WavioError::SpectrogramError`] if the input is shorter than one window.
 /// - [`WavioError::SpectrogramError`] if `window_size` is zero or `hop_size` is zero.
+///
+/// # Examples
+///
+/// ```
+/// use wavio::dsp::spectrogram::{compute_spectrogram, SpectrogramConfig};
+///
+/// let config = SpectrogramConfig::new(256, 128);
+/// let samples = vec![0.0; 1024];
+/// let spec = compute_spectrogram(&samples, &config).unwrap();
+///
+/// assert_eq!(spec.shape(), &[7, 129]);
+/// ```
 pub fn compute_spectrogram(
     samples: &[f32],
     config: &SpectrogramConfig,
@@ -210,11 +234,7 @@ mod tests {
             .0;
 
         // Allow a tolerance of +/- 2 bins due to spectral leakage.
-        let diff = if max_bin > expected_bin {
-            max_bin - expected_bin
-        } else {
-            expected_bin - max_bin
-        };
+        let diff = max_bin.abs_diff(expected_bin);
         assert!(
             diff <= 2,
             "Expected peak near bin {expected_bin}, found at bin {max_bin}"

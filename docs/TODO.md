@@ -39,13 +39,13 @@
 
 - [x] Implement WAV loader using `hound` — stereo → mono downmix, normalize to `f32`
 - [x] Write unit test: load a known WAV, assert sample count and sample rate
-- [ ] Add `symphonia` feature flag (`features = ["symphonia"]`) for MP3/AAC/FLAC
+- [x] Add `symphonia` feature flag (`features = ["symphonia"]`) for MP3/AAC/FLAC
 - [x] Implement `AudioSource` trait — abstraction over WAV and symphonia decoders
-- [ ] 🦀 Handle `symphonia`'s `Decoder` trait objects carefully — boxing required
-- [ ] Write integration test: load MP3 and WAV of same file, assert same sample length
-- [ ] Add resampling stub — note: full resampling deferred to Month 2
+- [x] 🦀 Handle `symphonia`'s `Decoder` trait objects carefully — boxing required
+- [x] Write integration test: load MP3 and WAV of same file, assert same sample length
+- [x] Add resampling stub — note: full resampling deferred to Month 2
 - [x] ⚠️ Decide on internal sample rate standard (recommend: 22,050 Hz) — document this decision in `ARCHITECTURE.md`
-- [~] **Milestone:** Can load WAV and MP3 files into a normalized `Vec<f32>`
+- [x] **Milestone:** Can load WAV and MP3 files into a normalized `Vec<f32>`
 
 ---
 
@@ -121,32 +121,32 @@
 
 ### Week 7 — On-Disk Persistence (`sled` feature) (~10 hrs)
 
-- [ ] Add `persist` feature flag gating `sled` dependency
-- [ ] Design on-disk schema: key = `hash (u64 as bytes)`, value = `Vec<(u32, f32)>` (bincode-encoded)
-- [ ] Implement `PersistentIndex` wrapping `sled::Db` with same interface as `Index`
-- [ ] Implement `PersistentIndex::open(path: &Path)` and `::flush()`
-- [ ] 🦀 `sled` keys must be byte slices — use `u64::to_be_bytes()` for consistent ordering
-- [ ] Implement merge: load `PersistentIndex` into memory for querying (hybrid approach)
-- [ ] Write integration test: index tracks, drop process, reopen DB, query → still correct
-- [ ] ⚠️ `sled` is in maintenance mode — document this, note `redb` as future alternative
-- [ ] Add `Index::save_to_disk(path)` and `Index::load_from_disk(path)` convenience methods
-- [ ] **Milestone:** Index survives process restart
+- [x] Add `persist` feature flag gating `sled` dependency
+- [x] Design on-disk schema: key = `hash (u64 as bytes)`, value = `Vec<(u32, f32)>` (bincode-encoded)
+- [x] Implement `PersistentIndex` wrapping `sled::Db` with same interface as `Index`
+- [x] Implement `PersistentIndex::open(path: &Path)` and `::flush()`
+- [x] 🦀 `sled` keys must be byte slices — use `u64::to_be_bytes()` for consistent ordering
+- [x] Implement merge: load `PersistentIndex` into memory for querying (hybrid approach)
+- [x] Write integration test: index tracks, drop process, reopen DB, query → still correct
+- [x] ⚠️ `sled` is in maintenance mode — document this, note `redb` as future alternative
+- [x] Add `Index::save_to_disk(path)` and `Index::load_from_disk(path)` convenience methods
+- [x] **Milestone:** Index survives process restart
 
 ---
 
 ### Week 8 — Parallelism + Benchmarking (~10 hrs)
 
-- [ ] Add `rayon` dependency, gate behind `parallel` feature flag (on by default)
-- [ ] Parallelize fingerprint generation: `tracks.par_iter().map(|t| fingerprint(t))`
-- [ ] Parallelize peak extraction across spectrogram frames with `rayon`
-- [ ] 🦀 `ndarray` + `rayon`: use `par_axis_iter` — tricky but worth it
-- [ ] Set up `benches/` directory with `criterion` benchmarks:
+- [x] Add `rayon` dependency, gate behind `parallel` feature flag (on by default)
+- [x] Parallelize fingerprint generation: `tracks.par_iter().map(|t| fingerprint(t))`
+- [x] Parallelize peak extraction across spectrogram frames with `rayon`
+- [x] 🦀 `ndarray` + `rayon`: use `par_axis_iter` — tricky but worth it
+- [x] Set up `benches/` directory with `criterion` benchmarks:
   - `bench_fingerprint_single` — one 3-min WAV
   - `bench_index_1k` — index 1,000 synthetic tracks
   - `bench_query_1k` — 1,000 queries against 1k-track index
-- [ ] Run benchmarks, record baseline numbers in `BENCHMARKS.md`
-- [ ] ⚠️ `DashMap` for concurrent index writes — consider if needed for multi-threaded indexing
-- [ ] **Milestone:** Parallel indexing working, benchmarks documented
+- [x] Run benchmarks, record baseline numbers in `BENCHMARKS.md`
+- [x] ⚠️ `DashMap` for concurrent index writes — consider if needed for multi-threaded indexing
+- [x] **Milestone:** Parallel indexing working, benchmarks documented
 
 ---
 
@@ -158,71 +158,71 @@
 
 ### Week 9 — CLI Tool (~10 hrs)
 
-- [ ] Add `[[bin]]` target `wavio-cli` in `Cargo.toml`
-- [ ] Add `clap` dependency with derive feature
-- [ ] Implement `index` subcommand: `wavio index --db ./wavio.db ./music/*.mp3`
+- [x] Add `[[bin]]` target `wavio-cli` in `Cargo.toml`
+- [x] Add `clap` dependency with derive feature
+- [x] Implement `index` subcommand: `wavio index --db ./wavio.db ./music/*.mp3`
   - Walks directory, fingerprints all audio files, writes to persistent index
-- [ ] Implement `query` subcommand: `wavio query --db ./wavio.db ./clip.wav`
+- [x] Implement `query` subcommand: `wavio query --db ./wavio.db ./clip.wav`
   - Returns best match, score, and estimated time offset
-- [ ] Implement `info` subcommand: `wavio info --db ./wavio.db` — track count, hash count
-- [ ] Add `--verbose` flag — print peak count, hash count, query time
-- [ ] Add progress bar with `indicatif` crate for batch indexing
-- [ ] Write CLI integration tests using `assert_cmd` crate
-- [ ] ⚠️ Error messages must be human-readable — DSP engineers will debug from CLI output
-- [ ] **Milestone:** Can index a folder of music and identify a clip from the command line
+- [x] Implement `info` subcommand: `wavio info --db ./wavio.db` — track count, hash count
+- [x] Add `--verbose` flag — print peak count, hash count, query time
+- [x] Add progress bar with `indicatif` crate for batch indexing
+- [x] Write CLI integration tests using `assert_cmd` crate
+- [x] ⚠️ Error messages must be human-readable — DSP engineers will debug from CLI output
+- [x] **Milestone:** Can index a folder of music and identify a clip from the command line
 
 ---
 
 ### Week 10 — Python Bindings (`PyO3`) (~10 hrs)
 
-- [ ] Add `pyo3` dependency with `extension-module` feature
-- [ ] Create `python/` directory with `pyproject.toml` using `maturin`
-- [ ] 🦀 `maturin develop` workflow — understand editable installs before writing bindings
-- [ ] Expose `PyFingerprinter` class — `.fingerprint_file(path: str) -> list[tuple[int, float]]`
-- [ ] Expose `PyIndex` class — `.insert(track_id, fingerprints)`, `.query(fingerprints) -> dict`
-- [ ] Write Python test suite: `pytest tests/test_wavio.py`
-- [ ] ⚠️ GIL handling — release GIL during fingerprinting with `py.allow_threads(|| ...)`
+- [x] Add `pyo3` dependency with `extension-module` feature
+- [x] Create `python/` directory with `pyproject.toml` using `maturin`
+- [x] 🦀 `maturin develop` workflow — understand editable installs before writing bindings
+- [x] Expose `PyFingerprinter` class — `.fingerprint_file(path: str) -> list[tuple[int, float]]`
+- [x] Expose `PyIndex` class — `.insert(track_id, fingerprints)`, `.query(fingerprints) -> dict`
+- [x] Write Python test suite: `pytest tests/test_wavio.py`
+- [x] ⚠️ GIL handling — release GIL during fingerprinting with `py.allow_threads(|| ...)`
 - [ ] Add `wavio` to PyPI via `maturin publish` (optional — can defer to v0.2)
-- [ ] Write `python/README.md` with pip install + usage example
-- [ ] **Milestone:** `import wavio` works in Python, full round-trip test passes
+- [x] Write `python/README.md` with pip install + usage example
+- [x] **Milestone:** `import wavio` works in Python, full round-trip test passes
 
 ---
 
 ### Week 11 — Documentation & API Polish (~10 hrs)
 
-- [ ] Write `//!` crate-level doc comment in `lib.rs` — overview, quick example, feature flags
-- [ ] Write `///` doc comments on every public struct, trait, and function
-- [ ] Add `# Examples` sections to all public functions — `cargo test --doc` must pass
-- [ ] Run `cargo doc --open` — fix any broken links or missing docs
-- [ ] Write `ARCHITECTURE.md`:
+- [x] Write `//!` crate-level doc comment in `lib.rs` — overview, quick example, feature flags
+- [x] Write `///` doc comments on every public struct, trait, and function
+- [x] Add `# Examples` sections to all public functions — `cargo test --doc` must pass
+- [x] Run `cargo doc --open` — fix any broken links or missing docs
+- [x] Write `ARCHITECTURE.md`:
   - ASCII pipeline diagram
   - Design decisions and rationale (sample rate, FFT size, hash bit-packing)
   - Known limitations section
-- [ ] Update `README.md` — add real benchmark numbers, installation, CLI usage
-- [ ] Add `CHANGELOG.md` following Keep a Changelog format
-- [ ] Review public API — rename anything ambiguous, seal internal traits with `pub(crate)`
-- [ ] Run `cargo clippy -- -W clippy::pedantic`, fix all warnings
-- [ ] ⚠️ Add `#[non_exhaustive]` on enums/structs you may extend — prevents breaking changes in v0.2
-- [ ] **Milestone:** `cargo doc` is complete, zero warnings, all doc tests pass
+- [x] Update `README.md` — add real benchmark numbers, installation, CLI usage
+- [x] Add `CHANGELOG.md` following Keep a Changelog format
+- [x] Review public API — rename anything ambiguous, seal internal traits with `pub(crate)`
+- [x] Run `cargo clippy -- -W clippy::pedantic`, fix all warnings
+- [x] ⚠️ Add `#[non_exhaustive]` on enums/structs you may extend — prevents breaking changes in v0.2
+- [x] **Milestone:** `cargo doc` is complete, zero warnings, all doc tests pass
 
 ---
 
 ### Week 12 — Testing, Hardening & Publish (~10 hrs)
 
-- [ ] Write property-based tests with `proptest`:
+- [x] Write property-based tests with `proptest`:
   - Fingerprinting is deterministic across runs
   - Query always returns `None` for empty index
   - Score is monotonically higher for longer matching clips
-- [ ] Set up code coverage with `cargo-tarpaulin` — target > 70%
-- [ ] Test on Linux + macOS via GitHub Actions matrix build
+- [x] Set up code coverage with `cargo-tarpaulin` — target > 70%
+- [x] Test on Linux + macOS via GitHub Actions matrix build
 - [ ] Run `cargo audit` — fix any known vulnerability advisories
-- [ ] Pin MSRV in `Cargo.toml`: `rust-version = "1.75.0"`
-- [ ] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
-- [ ] Tag `v0.1.0`, write GitHub release notes
-- [ ] Publish to `crates.io`: `cargo publish`
+- [x] Pin MSRV in `Cargo.toml`: `rust-version = "1.85.0"`
+- [x] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
+- [x] Tag `v0.1.0`, write GitHub release notes
+- [x] Publish to `crates.io`: `cargo publish`
 - [ ] Announce on r/rust, This Week in Rust submissions, Hacker News (Show HN)
 - [ ] ⚠️ `crates.io` publishes are permanent and immutable — double-check before publishing
-- [ ] **Milestone:** `wavio = "0.1"` works in any Rust project worldwide 🎉
+- [x] **Milestone:** `wavio = "0.1"` works in any Rust project worldwide 🎉
 
 ---
 

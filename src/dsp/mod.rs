@@ -6,3 +6,6 @@
 pub mod audio;
 pub mod peaks;
 pub mod spectrogram;
+pub mod fingerprint;
+
+pub use fingerprint::Fingerprinter;
