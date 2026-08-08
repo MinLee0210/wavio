@@ -64,6 +64,7 @@ wavio-cli query --db <DB_PATH> <FILE>
 ```
 Match found: hotel_california
 Score: 312
+Confidence: 87.3%
 Offset: 47.35s
 ```
 

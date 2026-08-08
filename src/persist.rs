@@ -103,11 +103,9 @@ impl PersistentIndex {
         let Ok(hashes) = read_txn.open_table(HASHES) else { return 0; };
         let Ok(iter) = hashes.iter() else { return 0; };
         let mut count = 0;
-        for item in iter {
-            if let Ok((_, val)) = item {
-                if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(val.value()) {
-                    count += entries.len();
-                }
+        for (_, val) in iter.flatten() {
+            if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(val.value()) {
+                count += entries.len();
             }
         }
         count
@@ -224,12 +222,16 @@ impl PersistentIndex {
             }
         }
 
+        #[allow(clippy::cast_precision_loss)]
+        let confidence = best_score as f32 / fingerprints.len() as f32;
+
         best_track.and_then(|tid| {
             self.track_name_with_txn(&read_txn, tid)
                 .map(|name| QueryResult {
                     track_id: name,
                     score: best_score,
                     offset_secs: self.bin_to_offset(best_bin),
+                    confidence,
                 })
         })
     }

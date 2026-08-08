@@ -101,24 +101,55 @@ fn main() -> anyhow::Result<()> {
                     .progress_chars("=>-"),
             );
 
-            // Sequentially or parallel process based on feature.
-            // Using a simple non-parallel loop first. Can parallelize extraction later.
-            for file in files {
-                if let Some(track_name) = file.file_stem().and_then(|s| s.to_str()) {
-                    let name = track_name.to_string();
-                    match fingerprint_file(&file) {
-                        Ok(hashes) => {
-                            if cli.verbose {
-                                pb.println(format!("Indexed '{}': {} hashes", name, hashes.len()));
-                            }
-                            index.insert(&name, &hashes);
+            // Fingerprinting (load + FFT + peak extraction + hashing) is the
+            // CPU-heavy, per-file-independent part of indexing, so it runs
+            // across the thread pool when the `parallel` feature is enabled.
+            // Insertion into the index is done afterward, serially, since it
+            // mutates shared state.
+            #[cfg(feature = "parallel")]
+            let named_files: Vec<(String, PathBuf)> = files
+                .into_iter()
+                .filter_map(|file| {
+                    let name = file.file_stem().and_then(|s| s.to_str())?.to_string();
+                    Some((name, file))
+                })
+                .collect();
+
+            #[cfg(feature = "parallel")]
+            let results: Vec<(String, anyhow::Result<Vec<Fingerprint>>)> = named_files
+                .par_iter()
+                .map(|(name, file)| {
+                    let result = fingerprint_file(file);
+                    pb.inc(1);
+                    (name.clone(), result)
+                })
+                .collect();
+
+            #[cfg(not(feature = "parallel"))]
+            let results: Vec<(String, anyhow::Result<Vec<Fingerprint>>)> = files
+                .iter()
+                .filter_map(|file| {
+                    file.file_stem().and_then(|s| s.to_str()).map(|track_name| {
+                        let name = track_name.to_string();
+                        let result = fingerprint_file(file);
+                        pb.inc(1);
+                        (name, result)
+                    })
+                })
+                .collect();
+
+            for (name, result) in results {
+                match result {
+                    Ok(hashes) => {
+                        if cli.verbose {
+                            pb.println(format!("Indexed '{}': {} hashes", name, hashes.len()));
                         }
-                        Err(e) => {
-                            pb.println(format!("Failed to index '{}': {}", name, e));
-                        }
+                        index.insert(&name, &hashes);
+                    }
+                    Err(e) => {
+                        pb.println(format!("Failed to index '{}': {}", name, e));
                     }
                 }
-                pb.inc(1);
             }
             pb.finish_with_message("Indexing complete.");
 
@@ -153,6 +184,7 @@ fn main() -> anyhow::Result<()> {
                 Some(r) => {
                     println!("Match found: {}", r.track_id);
                     println!("Score: {}", r.score);
+                    println!("Confidence: {:.1}%", r.confidence * 100.0);
                     println!("Offset: {:.2}s", r.offset_secs);
                 }
                 None => {

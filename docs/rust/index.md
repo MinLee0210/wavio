@@ -14,7 +14,7 @@ wavio::dsp::spectrogram →  Sliding-window FFT → dB spectrogram
 wavio::dsp::peaks       →  2D local-max peak extraction
 wavio::hash             →  Combinatorial hashing → u64 fingerprints
 wavio::index            →  In-memory index + query engine
-wavio::persist          →  On-disk sled backend (feature = "persist")
+wavio::persist          →  On-disk redb backend (feature = "persist")
 wavio::io               →  Pluggable audio source trait
 wavio::error            →  WavioError enum
 ```

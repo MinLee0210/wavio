@@ -60,6 +60,14 @@ pub struct QueryResult {
     /// Estimated time offset (seconds) between the query clip and the
     /// indexed track. Positive means the query starts later in the track.
     pub offset_secs: f32,
+    /// `score` normalized by the number of fingerprints in the query
+    /// (`score / query_fingerprint_count`), roughly in `[0.0, 1.0]`.
+    ///
+    /// This indicates how *decisive* the match is, independent of clip
+    /// length: a short, noisy query that barely edges out competing tracks
+    /// will have a low confidence even if `score` is nonzero, while a clean
+    /// match against most of the query's fingerprints approaches `1.0`.
+    pub confidence: f32,
 }
 
 // ---------------------------------------------------------------------------
@@ -245,11 +253,15 @@ impl Index {
             }
         }
 
+        #[allow(clippy::cast_precision_loss)]
+        let confidence = best_score as f32 / fingerprints.len() as f32;
+
         best_track.and_then(|tid| {
             self.tracks.name(tid).map(|name| QueryResult {
                 track_id: name.to_string(),
                 score: best_score,
                 offset_secs: self.bin_to_offset(best_bin),
+                confidence,
             })
         })
     }
@@ -319,13 +331,20 @@ impl Index {
         persistent.load_into_memory()
     }
 
-    /// Inserts a batch of tracks into the index, parallelizing fingerprint
-    /// processing across the thread pool.
+    /// Inserts a batch of already-fingerprinted tracks into the index.
     ///
-    /// The CPU-heavy work (computing fingerprints from peaks) for each track
-    /// runs in parallel via `rayon`. Insertion into the underlying `HashMap`
-    /// is serialized afterward — no `DashMap` is required because contention
-    /// only occurs during the cheap insertion phase, not the expensive DSP phase.
+    /// This performs plain, serial `HashMap` insertion. Fingerprint
+    /// *computation* (spectrogram, peak extraction, combinatorial hashing)
+    /// is the CPU-heavy, per-track-independent part of indexing and is
+    /// where parallelism actually pays off -- callers should compute each
+    /// track's fingerprints in parallel with `rayon::par_iter` (see
+    /// `wavio-cli`'s `index` subcommand for an example) and then hand the
+    /// results to this method, since insertion itself is too cheap to
+    /// benefit from a thread pool.
+    ///
+    /// Kept as a distinct entry point for API symmetry with the
+    /// single-track [`Index::insert`]; behaves identically to calling
+    /// [`Index::insert`] in a loop.
     ///
     /// # Arguments
     ///
@@ -334,20 +353,7 @@ impl Index {
     /// Requires the `parallel` feature flag.
     #[cfg(feature = "parallel")]
     pub fn insert_batch_parallel(&mut self, batch: &[(String, Vec<crate::hash::Fingerprint>)]) {
-        use rayon::prelude::*;
-
-        // Validate + fingerprint in parallel (read-only, no shared state).
-        // Each element is (track_name_ref, fingerprints_ref) -> already computed.
-        // The parallel step here is a no-op transformation kept for extensibility
-        // (e.g., if batch elements carried raw peaks instead of fingerprints).
-        // The real gain comes when callers use rayon to build the batch in parallel.
-        let processed: Vec<(&str, &[crate::hash::Fingerprint])> = batch
-            .par_iter()
-            .map(|(name, fps)| (name.as_str(), fps.as_slice()))
-            .collect();
-
-        // Serial insertion into the HashMap.
-        for (name, fps) in processed {
+        for (name, fps) in batch {
             self.insert(name, fps);
         }
     }

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-08
+
+### Added
+
+- `QueryResult.confidence` — `score` normalized by the query's fingerprint count, giving a `[0.0, 1.0]`-ish indicator of match decisiveness independent of clip length. Exposed through `Index::query`, `PersistentIndex::query`, the CLI (`Confidence: NN.N%`), and the Python bindings' query dict.
+
+### Changed
+
+- `wavio-cli index` now fingerprints files in parallel via `rayon` when built with the `parallel` feature, instead of processing files strictly sequentially. Insertion into the index remains serial.
+- `Index::insert_batch_parallel` documentation corrected: it performs plain serial insertion (too cheap to benefit from a thread pool); callers should parallelize fingerprint *computation* upstream, as `wavio-cli` now does.
+
+### Fixed
+
+- `cargo bench` failed to compile: `benches/fingerprint.rs` constructed the `#[non_exhaustive]` `Fingerprint` struct via literal syntax from outside the crate. Switched to `Fingerprint::new(..)`.
+- A pre-existing `clippy::all`-denied lint in `PersistentIndex::hash_count`.
+- Stale documentation describing the persistence backend as `sled`; it was migrated to `redb` before the 0.1.0 release but README, crate docs, and the reference site still referenced `sled`. Also corrected two outdated "known limitations" entries (symphonia decoding and resampling are both implemented).
+
+### Removed
+
+- Unused `dashmap` optional dependency (declared under the `parallel` feature but never referenced in code).
+
 ## [0.1.0] - 2026-07-11
 
 ### Added

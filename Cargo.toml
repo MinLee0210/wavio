@@ -1,6 +1,6 @@
 [package]
 name = "wavio"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85.0"
 authors = ["Le Duc Minh <minh.leduc.0210@gmail.com>"]
@@ -29,7 +29,6 @@ anyhow = "1.0"
 # Optional dependencies, gated behind feature flags
 symphonia = { version = "0.5", optional = true, features = ["mp3", "aac", "flac"] }
 rayon = { version = "1.10", optional = true }
-dashmap = { version = "6", optional = true }
 redb = { version = "2", optional = true }
 serde = { version = "1", optional = true, features = ["derive"] }
 bincode = { version = "1", optional = true }
@@ -45,7 +44,7 @@ tempfile = "3"
 [features]
 default = []
 symphonia = ["dep:symphonia"]
-parallel = ["dep:rayon", "dep:dashmap"]
+parallel = ["dep:rayon"]
 persist = ["dep:redb", "dep:serde", "dep:bincode"]
 python = ["dep:pyo3"]
 

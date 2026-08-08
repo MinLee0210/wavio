@@ -31,7 +31,7 @@ wavio = { version = "0.1", features = ["persist", "parallel"] }
 | Flag | Description |
 |------|-------------|
 | `parallel` | Rayon-based parallel fingerprinting and peak extraction |
-| `persist` | On-disk index persistence via `sled` |
+| `persist` | On-disk index persistence via `redb` |
 | `python` | Python bindings via PyO3 |
 
 ### From source

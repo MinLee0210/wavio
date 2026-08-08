@@ -46,10 +46,7 @@ fn build_synthetic_batch(n_tracks: usize) -> Vec<(String, Vec<Fingerprint>)> {
         .map(|track_idx| {
             // 20 unique fingerprints per track, no hash overlap between tracks.
             let fps: Vec<Fingerprint> = (0..20_u64)
-                .map(|i| Fingerprint {
-                    hash: (track_idx as u64) * 1_000_000 + i,
-                    anchor_time: i as f32 * 0.05,
-                })
+                .map(|i| Fingerprint::new((track_idx as u64) * 1_000_000 + i, i as f32 * 0.05))
                 .collect();
             (format!("track_{track_idx}"), fps)
         })
@@ -112,10 +109,7 @@ fn bench_query_1k(c: &mut Criterion) {
     let queries: Vec<Vec<Fingerprint>> = (0..1_000_usize)
         .map(|track_idx| {
             (0..20_u64)
-                .map(|i| Fingerprint {
-                    hash: (track_idx as u64) * 1_000_000 + i,
-                    anchor_time: i as f32 * 0.05,
-                })
+                .map(|i| Fingerprint::new((track_idx as u64) * 1_000_000 + i, i as f32 * 0.05))
                 .collect()
         })
         .collect();

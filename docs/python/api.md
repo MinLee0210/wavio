@@ -129,7 +129,7 @@ if result:
 
 #### `save(path: str) -> None`
 
-Saves the index to a sled database directory on disk.
+Saves the index to a redb database directory on disk.
 
 !!! note "Requires `persist` feature"
     The Python module must be built with `maturin develop --features python,persist`.

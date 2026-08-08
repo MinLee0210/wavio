@@ -174,8 +174,8 @@ let mut index = Index::new(IndexConfig { offset_bin_size: 0.01 });
 | `query(fingerprints) -> Option<QueryResult>` | Find best match |
 | `track_count() -> usize` | Number of indexed tracks |
 | `hash_count() -> usize` | Total hash entries |
-| `save_to_disk(path)` | Save to sled DB *(persist feature)* |
-| `load_from_disk(path) -> Result<Index>` | Load from sled DB *(persist feature)* |
+| `save_to_disk(path)` | Save to redb DB *(persist feature)* |
+| `load_from_disk(path) -> Result<Index>` | Load from redb DB *(persist feature)* |
 | `insert_batch_parallel(batch)` | Parallel batch insert *(parallel feature)* |
 
 ### `QueryResult`
@@ -196,7 +196,7 @@ let mut index = Index::new(IndexConfig { offset_bin_size: 0.01 });
 
 ## `persist`
 
-On-disk fingerprint index backed by sled. Requires the `persist` feature.
+On-disk fingerprint index backed by redb. Requires the `persist` feature.
 
 ### `PersistentIndex`
 

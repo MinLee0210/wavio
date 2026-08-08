@@ -186,6 +186,7 @@ impl PyIndex {
             dict.set_item("track_id", result.track_id).unwrap();
             dict.set_item("score", result.score).unwrap();
             dict.set_item("offset_secs", result.offset_secs).unwrap();
+            dict.set_item("confidence", result.confidence).unwrap();
             Some(dict)
         } else {
             None

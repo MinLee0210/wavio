@@ -38,7 +38,7 @@
        │  save_to_disk()              persist.rs  (feature = "persist")
        ▼
 ┌─────────────┐
-│  sled DB    │  On-disk persistence
+│  redb DB    │  On-disk persistence
 └─────────────┘
 ```
 
@@ -79,19 +79,18 @@ Defined as `INTERNAL_SAMPLE_RATE` in `dsp/audio.rs`.
 2. Quantize offset into bins (default 50 ms)
 3. Track with tallest histogram bin wins
 
-### Persistence: sled
+### Persistence: redb
 
-Embedded key-value store with zero-config setup. Four sled trees:
+Embedded, transactional, pure-Rust key-value store with a B-tree storage layout and ACID guarantees. Four redb tables:
 
-| Tree | Key | Value |
-|------|-----|-------|
-| `hashes` | `u64` (big-endian bytes) | bincode `Vec<(TrackId, f32)>` |
+| Table | Key | Value |
+|-------|-----|-------|
+| `hashes` | `u64` | bincode `Vec<(TrackId, f32)>` |
 | `tracks_by_name` | track name | `u32` ID |
 | `tracks_by_id` | `u32` ID | track name |
 | `metadata` | `"config"`, `"next_id"` | config / counter |
 
-!!! note "sled is in maintenance mode"
-    The API is designed to be backend-agnostic. Migration to [`redb`](https://crates.io/crates/redb) is planned for v0.2.
+`redb` replaced the originally-planned `sled` backend (which was in maintenance mode) before the v0.1 release.
 
 ---
 
@@ -109,7 +108,7 @@ src/
     peaks.rs         2D local-max constellation point extraction
   hash.rs            Combinatorial hashing → u64 fingerprints
   index.rs           In-memory index + query engine
-  persist.rs         On-disk sled persistence (feature = "persist")
+  persist.rs         On-disk redb persistence (feature = "persist")
   python.rs          PyO3 bindings (feature = "python")
   io/
     mod.rs           I/O trait re-exports
@@ -123,8 +122,7 @@ src/
 
 ## Known Limitations
 
-1. **WAV-only input.** MP3/AAC/FLAC via `symphonia` is stubbed but not implemented in v0.1.
-2. **No resampling.** Audio must be at 22,050 Hz for correct results.
-3. **sled backend.** Maintenance-mode dependency. Migration to `redb` planned.
-4. **No concurrent writes.** The `Index` uses `HashMap`; use `insert_batch_parallel` for parallel indexing.
-5. **Music-tuned defaults.** Speech or environmental audio may need parameter tuning.
+1. **Time stretching & pitch shifting.** Significant tempo changes (>5%) or pitch shifts break hash matching — see `ARCHITECTURE.md` for details.
+2. **Linear-interpolation resampling.** Non-native sample rates are resampled to 22,050 Hz without an anti-aliasing low-pass filter, which can introduce minor aliasing artifacts for heavily downsampled sources.
+3. **No concurrent writes.** The `Index` uses a plain `HashMap`; concurrent mutation requires external synchronization. `insert_batch_parallel` parallelizes fingerprint *computation* upstream, not the insertion itself.
+4. **Music-tuned defaults.** Speech or environmental audio may need parameter tuning.

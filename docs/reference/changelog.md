@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-08-08
+
+### Added
+
+- `QueryResult.confidence` — `score` normalized by the query's fingerprint count, exposed through `Index::query`, `PersistentIndex::query`, the CLI, and the Python bindings.
+
+### Changed
+
+- `wavio-cli index` fingerprints files in parallel via `rayon` when built with the `parallel` feature.
+
+### Fixed
+
+- `cargo bench` compile failure in `benches/fingerprint.rs`.
+- Stale documentation describing the persistence backend as `sled` (migrated to `redb` before 0.1.0).
+
+### Removed
+
+- Unused `dashmap` optional dependency.
+
+[0.2.0]: https://github.com/MinLee0210/wavio/releases/tag/v0.2.0
+
+---
+
 ## [0.1.0] - 2026-03-22
 
 ### Added
@@ -28,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `QueryResult` with track name, score, and estimated offset
 
 - **Persistence** (`persist` feature)
-    - On-disk `PersistentIndex` backed by sled
+    - On-disk `PersistentIndex` backed by redb
     - `Index::save_to_disk()` and `Index::load_from_disk()`
 
 - **Parallelism** (`parallel` feature)

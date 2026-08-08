@@ -351,6 +351,22 @@ mod tests {
     }
 
     #[test]
+    fn test_tied_peaks_are_both_suppressed() {
+        // Two peaks with the exact same amplitude within each other's
+        // neighborhood: neither is a *strict* maximum, so both must be
+        // suppressed.
+        let spec = make_test_spectrogram(50, 129, &[(25, 64, -10.0), (26, 65, -10.0)]);
+        let config = PeakExtractorConfig {
+            time_neighborhood: 5,
+            freq_neighborhood: 5,
+            threshold_db: -40.0,
+            ..PeakExtractorConfig::default()
+        };
+        let peaks = extract_peaks(&spec, &config);
+        assert!(peaks.is_empty(), "tied peaks should both be suppressed, got {peaks:?}");
+    }
+
+    #[test]
     fn test_empty_spectrogram() {
         let spec = Array2::<f32>::from_elem((0, 0), -100.0);
         let config = PeakExtractorConfig::default();

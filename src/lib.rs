@@ -27,7 +27,7 @@
 //!       → dB power spectrogram
 //!         → 2D local-max peak detection
 //!           → combinatorial hashing (peak pairs → u64)
-//!             → index (HashMap / sled) → query → match
+//!             → index (HashMap / redb) → query → match
 //! ```
 //!
 //! ## Quick Example
@@ -64,8 +64,8 @@
 //!
 //! | Flag | Description | Dependencies |
 //! |------|-------------|--------------|
-//! | `parallel` | Rayon-based parallel fingerprinting and peak extraction | `rayon`, `dashmap` |
-//! | `persist` | On-disk index persistence via `sled` | `sled`, `serde`, `bincode` |
+//! | `parallel` | Rayon-based parallel fingerprinting and peak extraction | `rayon` |
+//! | `persist` | On-disk index persistence via `redb` | `redb`, `serde`, `bincode` |
 //! | `python` | Python bindings via PyO3 | `pyo3` |
 //!
 //! Enable features in your `Cargo.toml`:
