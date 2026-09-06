@@ -7,5 +7,7 @@ pub mod audio;
 pub mod peaks;
 pub mod spectrogram;
 pub mod fingerprint;
+pub mod streaming;
 
 pub use fingerprint::Fingerprinter;
+pub use streaming::{StreamConfig, StreamingFingerprinter};

@@ -107,8 +107,37 @@ The pair is packed into a single `u64` integer:
 
 ---
 
+## 3b. Triplet Hashing (Pitch-Shift / Time-Stretch-Robust Mode)
+
+The pairwise hash above encodes **absolute** `(freq1_bin, freq2_bin, delta_t)`. Any uniform pitch shift (all frequencies scaled by a constant factor `s`) or time stretch (all time deltas scaled by a constant factor `r`) changes every one of those three values, so the hash changes — this is the root cause of the pitch/time-stretch limitation below.
+
+`wavio::triplet` instead hashes **ratios** within a triplet of peaks `(anchor, t1, t2)`:
+
+*   `freq_ratio_1 = t1.freq / anchor.freq`, `freq_ratio_2 = t2.freq / anchor.freq` — under a uniform pitch shift, numerator and denominator both scale by `s`, so the ratio is **exactly unchanged** (modulo FFT bin quantization noise on the underlying peak frequencies).
+*   `time_ratio = (t2.time - anchor.time) / (t1.time - anchor.time)` — under a uniform time stretch, both deltas scale by `r`, so this ratio is likewise unchanged.
+
+This is the same principle behind Panako's Constant-Q triplet hashing. `anchor_time` on the resulting fingerprint is still `anchor.time`, so this mode is a drop-in alternative hash source — `Index`/`PersistentIndex` require no changes.
+
+### Triplet Bit Layout
+
+Uses the same 64-bit budget as the pairwise hash, for symmetry:
+
+```text
+ 63          60 59              40 39              20 19               0
++--------------+------------------+------------------+------------------+
+|   Reserved   |  freq_ratio_1 q  |  freq_ratio_2 q  |   time_ratio q   |
+|   (4 bits)   |     (20 bits)    |     (20 bits)    |     (20 bits)    |
++--------------+------------------+------------------+------------------+
+```
+
+Each ratio is quantized as `round(log2(ratio) / resolution)`, bias-shifted into an unsigned 20-bit range — quantizing in `log2` space matches the multiplicative (scale-factor) nature of the invariance this mode relies on.
+
+For each anchor, up to `fan_value` subsequent peaks are collected (identical candidate selection to the pairwise algorithm), and each **adjacent pair** among them forms one triplet — bounding output to `fan_value - 1` hashes per anchor, the same order of magnitude as the pairwise hash's `fan_value` pairs, avoiding the `C(fan_value, 2)` blow-up of an all-pairs approach.
+
+Enable it via `Fingerprinter::with_triplet_hashing(TripletHashConfig::default())`, or `wavio-cli --robust`. A database must be queried with the same mode it was indexed with — mixing modes silently degrades to "no match" rather than erroring, since the on-disk hashes don't record which mode produced them.
+
 ## 4. Known Limitations
 
-*   **Time Stretching & Pitch Shifting**: Significant time stretching (>5%) shifts target delta times beyond the quantization resolution, resulting in hash mismatches. Pitch shifting changes absolute frequency bin locations, preventing matching.
+*   **Time Stretching & Pitch Shifting**: The default pairwise hash mode is brittle here: significant time stretching (>5%) shifts target delta times beyond the quantization resolution, resulting in hash mismatches, and pitch shifting changes absolute frequency bin locations, preventing matching. The opt-in triplet hashing mode (§3b) addresses this at the hash level — ratio-based hashes are largely invariant to both distortions — but the index's time-offset histogram still correlates on absolute `anchor_time`, which drifts under real time stretch (though not under pitch shift alone). So triplet mode meaningfully improves match *recall* (whether the right track is found at all) under both distortions, and offset/confidence concentration specifically under pitch shift, but precise offset estimation under time stretch remains an open problem.
 *   **Monophonic Noise/Overlap**: In highly noisy environments or where voice/noise completely dominates the audio, the extracted local maxima shifts away from the original song's spectral peaks, degrading match scores.
 *   **Storage Size**: High `fan_value` parameters lead to a combinatorial explosion of fingerprints. Indexing a large library (>100,000 tracks) requires considerable RAM or large disk persistent indexes.

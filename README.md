@@ -8,6 +8,9 @@
 
 - **Full DSP pipeline** — WAV loading → FFT spectrogram → constellation peak detection → combinatorial hashing
 - **In-memory & on-disk indexing** — query against thousands of tracks in microseconds
+- **Ranked & threshold-gated queries** — `Index::query_topn` for runner-up candidates, `Index::query_with_min_confidence` to reject weak matches
+- **Streaming fingerprinting** — `StreamingFingerprinter` processes audio in overlapping blocks, no need to hold the whole file in memory
+- **Pitch-shift / time-stretch-robust mode** — opt-in triplet hashing (`Fingerprinter::with_triplet_hashing`, CLI `--robust`) trades some collision resistance for ratio-based hashes that are largely invariant to uniform pitch shift and time stretch
 - **Deterministic** — same input always produces the same fingerprints
 - **Zero unsafe code** — `#![forbid(unsafe_code)]`
 - **Parallel processing** — optional rayon-based parallelism
@@ -80,6 +83,12 @@ wavio-cli info --db ./wavio.db
 ```
 
 Add `--verbose` for detailed output (peak count, hash count, timing).
+
+Other flags:
+
+- `index --force` — re-index a track even if it's already in the database (by default, already-indexed tracks are skipped).
+- `query --min-confidence <F>` — reject a match whose confidence is below `<F>` (0.0-1.0), reporting "no match" instead.
+- `--robust` (global, works on both `index` and `query`) — use pitch-shift / time-stretch-robust triplet hashing instead of the default pairwise hashing. **A database must be queried with the same `--robust` setting it was indexed with** — mixing modes silently degrades to "no match" rather than erroring.
 
 ```bash
 # Build the CLI (requires the persist feature)

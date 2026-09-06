@@ -266,6 +266,128 @@ impl Index {
         })
     }
 
+    /// Returns whether a track with the given name has already been indexed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::hash::Fingerprint;
+    /// use wavio::index::Index;
+    ///
+    /// let mut index = Index::default();
+    /// assert!(!index.contains_track("my_song"));
+    /// index.insert("my_song", &[Fingerprint::new(1, 0.0)]);
+    /// assert!(index.contains_track("my_song"));
+    /// ```
+    #[must_use]
+    pub fn contains_track(&self, name: &str) -> bool {
+        self.tracks.name_to_id.contains_key(name)
+    }
+
+    /// Like [`Index::query`], but returns `None` unless the best match's
+    /// `confidence` is at least `min_confidence`.
+    ///
+    /// Useful for rejecting weak/spurious matches (e.g. a short or noisy
+    /// query clip that barely edges out unrelated tracks).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::hash::Fingerprint;
+    /// use wavio::index::Index;
+    ///
+    /// let mut index = Index::default();
+    /// index.insert("song_a", &[Fingerprint::new(1, 0.0), Fingerprint::new(2, 0.1)]);
+    ///
+    /// // Only one of two hashes matches -> confidence 0.5.
+    /// let query = vec![Fingerprint::new(1, 0.0), Fingerprint::new(999, 0.1)];
+    /// assert!(index.query_with_min_confidence(&query, 0.9).is_none());
+    /// assert!(index.query_with_min_confidence(&query, 0.4).is_some());
+    /// ```
+    #[must_use]
+    pub fn query_with_min_confidence(
+        &self,
+        fingerprints: &[Fingerprint],
+        min_confidence: f32,
+    ) -> Option<QueryResult> {
+        self.query(fingerprints)
+            .filter(|r| r.confidence >= min_confidence)
+    }
+
+    /// Queries the index and returns up to `n` ranked matches, best first.
+    ///
+    /// Unlike [`Index::query`], which returns only the single best-matching
+    /// track, this considers every track's own best histogram bin and
+    /// returns them sorted by `score` descending. Useful when scores are
+    /// close or callers want to inspect runner-up candidates.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::hash::Fingerprint;
+    /// use wavio::index::Index;
+    ///
+    /// let mut index = Index::default();
+    /// index.insert("song_a", &[Fingerprint::new(1, 0.0), Fingerprint::new(2, 0.1)]);
+    /// index.insert("song_b", &[Fingerprint::new(1, 0.0)]);
+    ///
+    /// let query = vec![Fingerprint::new(1, 0.0), Fingerprint::new(2, 0.1)];
+    /// let results = index.query_topn(&query, 2);
+    /// assert_eq!(results.len(), 2);
+    /// assert_eq!(results[0].track_id, "song_a");
+    /// assert_eq!(results[1].track_id, "song_b");
+    /// ```
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)]
+    pub fn query_topn(&self, fingerprints: &[Fingerprint], n: usize) -> Vec<QueryResult> {
+        if fingerprints.is_empty() || n == 0 {
+            return Vec::new();
+        }
+
+        let mut histograms: HashMap<TrackId, HashMap<i64, u32>> = HashMap::new();
+
+        for fp in fingerprints {
+            if let Some(entries) = self.table.get(&fp.hash) {
+                for &(track_id, db_time) in entries {
+                    let offset = db_time - fp.anchor_time;
+                    let bin = self.offset_to_bin(offset);
+
+                    *histograms
+                        .entry(track_id)
+                        .or_default()
+                        .entry(bin)
+                        .or_insert(0) += 1;
+                }
+            }
+        }
+
+        let query_len = fingerprints.len() as f32;
+
+        let mut best_per_track: Vec<(TrackId, u32, i64)> = histograms
+            .into_iter()
+            .filter_map(|(track_id, bins)| {
+                bins.into_iter()
+                    .max_by_key(|&(_, count)| count)
+                    .map(|(bin, count)| (track_id, count, bin))
+            })
+            .collect();
+
+        best_per_track.sort_by(|a, b| b.1.cmp(&a.1));
+        best_per_track.truncate(n);
+
+        best_per_track
+            .into_iter()
+            .filter_map(|(track_id, score, bin)| {
+                self.tracks.name(track_id).map(|name| QueryResult {
+                    track_id: name.to_string(),
+                    score,
+                    offset_secs: self.bin_to_offset(bin),
+                    confidence: score as f32 / query_len,
+                })
+            })
+            .collect()
+    }
+
     /// Quantizes a time offset (seconds) into a histogram bin index.
     #[allow(clippy::cast_possible_truncation)]
     fn offset_to_bin(&self, offset: f32) -> i64 {

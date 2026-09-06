@@ -215,7 +215,7 @@
   - Score is monotonically higher for longer matching clips
 - [x] Set up code coverage with `cargo-tarpaulin` — target > 70%
 - [x] Test on Linux + macOS via GitHub Actions matrix build
-- [ ] Run `cargo audit` — fix any known vulnerability advisories
+- [x] Run `cargo audit` — fix any known vulnerability advisories (done via `rustsec/audit-check` in CI)
 - [x] Pin MSRV in `Cargo.toml`: `rust-version = "1.85.0"`
 - [x] Do a dry run: `cargo publish --dry-run` — fix any packaging issues
 - [x] Tag `v0.1.0`, write GitHub release notes

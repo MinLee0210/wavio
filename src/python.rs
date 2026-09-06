@@ -3,7 +3,18 @@ use pyo3::types::PyDict;
 
 use crate::dsp::Fingerprinter;
 use crate::hash::Fingerprint;
-use crate::index::Index;
+use crate::index::{Index, QueryResult};
+
+/// Converts a [`QueryResult`] into a Python dict with the same shape as
+/// [`PyIndex::query`]'s return value.
+fn query_result_to_dict<'py>(py: Python<'py>, result: &QueryResult) -> Bound<'py, PyDict> {
+    let dict = PyDict::new(py);
+    dict.set_item("track_id", &result.track_id).unwrap();
+    dict.set_item("score", result.score).unwrap();
+    dict.set_item("offset_secs", result.offset_secs).unwrap();
+    dict.set_item("confidence", result.confidence).unwrap();
+    dict
+}
 
 /// A class for extracting audio fingerprints from a file.
 #[pyclass]
@@ -181,16 +192,48 @@ impl PyIndex {
             .map(|(hash, anchor_time)| Fingerprint::new(hash, anchor_time))
             .collect();
 
-        if let Some(result) = self.inner.query(&fps) {
-            let dict = PyDict::new(py);
-            dict.set_item("track_id", result.track_id).unwrap();
-            dict.set_item("score", result.score).unwrap();
-            dict.set_item("offset_secs", result.offset_secs).unwrap();
-            dict.set_item("confidence", result.confidence).unwrap();
-            Some(dict)
-        } else {
-            None
-        }
+        self.inner
+            .query(&fps)
+            .map(|result| query_result_to_dict(py, &result))
+    }
+
+    /// Query the index and return up to `n` ranked matches (best first) as a
+    /// list of dicts, using the same shape as `query`.
+    fn query_topn<'py>(
+        &self,
+        py: Python<'py>,
+        fingerprints: Vec<(u64, f32)>,
+        n: usize,
+    ) -> Vec<Bound<'py, PyDict>> {
+        let fps: Vec<Fingerprint> = fingerprints
+            .into_iter()
+            .map(|(hash, anchor_time)| Fingerprint::new(hash, anchor_time))
+            .collect();
+
+        self.inner
+            .query_topn(&fps, n)
+            .iter()
+            .map(|result| query_result_to_dict(py, result))
+            .collect()
+    }
+
+    /// Query the index using a list of fingerprints, rejecting any match
+    /// whose confidence is below `min_confidence`. Returns a dict on match,
+    /// or `None`.
+    fn query_with_min_confidence<'py>(
+        &self,
+        py: Python<'py>,
+        fingerprints: Vec<(u64, f32)>,
+        min_confidence: f32,
+    ) -> Option<Bound<'py, PyDict>> {
+        let fps: Vec<Fingerprint> = fingerprints
+            .into_iter()
+            .map(|(hash, anchor_time)| Fingerprint::new(hash, anchor_time))
+            .collect();
+
+        self.inner
+            .query_with_min_confidence(&fps, min_confidence)
+            .map(|result| query_result_to_dict(py, &result))
     }
 
     #[getter]

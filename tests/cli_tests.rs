@@ -1,14 +1,5 @@
 use assert_cmd::Command;
-use std::fs;
-use std::path::{Path, PathBuf};
 
-fn get_wav_path() -> PathBuf {
-    // We assume there's a way to generate a simple WAV or we'll just test the error handling.
-    // Given the difficulty of generating a WAV here without hound logic, 
-    // let's test the CLI's basic existence and simple errors 
-    // like missing database or invalid inputs.
-    PathBuf::from("data/sample.wav")
-}
 
 #[test]
 fn test_cli_info_no_db() {

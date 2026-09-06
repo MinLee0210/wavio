@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Pitch-shift / time-stretch-robust hashing** (`wavio::triplet`) — a new opt-in hashing mode that encodes ratios within a triplet of peaks instead of absolute frequency/time values, making it largely invariant to uniform pitch shift and time stretch (see `ARCHITECTURE.md` §3b for the invariance rationale and its limitations). Enable via `Fingerprinter::with_triplet_hashing(TripletHashConfig::default())` or the CLI's new `--robust` flag. Produces plain `Fingerprint`s, so `Index`/`PersistentIndex` require no changes.
+- **Streaming fingerprinting** (`wavio::dsp::streaming::StreamingFingerprinter`) — fingerprints audio in overlapping fixed-size blocks so callers don't need the whole file in memory (e.g. live/incremental sources). Block boundaries are aligned to the spectrogram's hop-size grid and trimmed on both edges for full peak-neighborhood and fan-out context, so streamed output matches a single batch `Fingerprinter::fingerprint` call almost exactly.
+- `Index::query_topn` / `PersistentIndex::query_topn` — returns up to `n` ranked matches (best first) instead of only the single best track.
+- `Index::query_with_min_confidence` / `PersistentIndex::query_with_min_confidence` — rejects a match whose `confidence` is below a threshold.
+- `Index::contains_track` — checks whether a track name is already indexed.
+- CLI: `index --force` re-indexes a track already present in the database (previously, re-running `index` on the same folder silently duplicated every hash for re-indexed tracks); `query --min-confidence <F>` rejects weak matches; `--robust` (global) switches both subcommands to triplet hashing.
+- Python bindings: `PyIndex.query_topn` and `PyIndex.query_with_min_confidence`, mirroring the new `Index` methods.
+
 ## [0.2.0] - 2026-08-08
 
 ### Added

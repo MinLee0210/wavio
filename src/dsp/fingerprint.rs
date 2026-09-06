@@ -15,6 +15,11 @@ use crate::hash::generate_hashes;
 #[cfg(feature = "parallel")]
 use crate::hash::generate_hashes_parallel;
 use crate::error::WavioError;
+use crate::triplet::TripletHashConfig;
+#[cfg(not(feature = "parallel"))]
+use crate::triplet::generate_triplet_hashes;
+#[cfg(feature = "parallel")]
+use crate::triplet::generate_triplet_hashes_parallel;
 
 /// High-level orchestration engine for the audio fingerprinting pipeline.
 ///
@@ -30,10 +35,17 @@ pub struct Fingerprinter {
     pub peak_config: PeakExtractorConfig,
     /// Configuration for combinatorial hashing.
     pub hash_config: HashConfig,
+    /// When set, fingerprinting uses pitch-shift / time-stretch-robust
+    /// triplet hashing (see [`crate::triplet`]) instead of the default
+    /// pairwise hashing. Set this via [`Fingerprinter::with_triplet_hashing`].
+    pub triplet_config: Option<TripletHashConfig>,
 }
 
 impl Fingerprinter {
     /// Creates a new `Fingerprinter` with custom configurations.
+    ///
+    /// Uses the default (pairwise) hashing mode; call
+    /// [`Fingerprinter::with_triplet_hashing`] to opt into the robust mode.
     #[must_use]
     pub fn new(
         spectrogram_config: SpectrogramConfig,
@@ -44,6 +56,40 @@ impl Fingerprinter {
             spectrogram_config,
             peak_config,
             hash_config,
+            triplet_config: None,
+        }
+    }
+
+    /// Switches this `Fingerprinter` to pitch-shift / time-stretch-robust
+    /// triplet hashing, using the given configuration.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use wavio::dsp::Fingerprinter;
+    /// use wavio::triplet::TripletHashConfig;
+    ///
+    /// let fingerprinter = Fingerprinter::default()
+    ///     .with_triplet_hashing(TripletHashConfig::default());
+    /// assert!(fingerprinter.triplet_config.is_some());
+    /// ```
+    #[must_use]
+    pub fn with_triplet_hashing(mut self, config: TripletHashConfig) -> Self {
+        self.triplet_config = Some(config);
+        self
+    }
+
+    /// Returns the maximum anchor-to-target time delta used by the active
+    /// hashing mode (triplet if configured, otherwise pairwise).
+    ///
+    /// Used by [`crate::dsp::streaming::StreamingFingerprinter`] to size its
+    /// block overlap so that no anchor's fan-out window is ever truncated by
+    /// a block boundary.
+    #[must_use]
+    pub fn max_pair_dt(&self) -> f32 {
+        match &self.triplet_config {
+            Some(cfg) => cfg.max_dt,
+            None => self.hash_config.max_dt,
         }
     }
 
@@ -75,10 +121,25 @@ impl Fingerprinter {
         #[cfg(not(feature = "parallel"))]
         let peaks = extract_peaks(&spec, &self.peak_config);
 
-        #[cfg(feature = "parallel")]
-        let hashes = generate_hashes_parallel(&peaks, &self.hash_config);
-        #[cfg(not(feature = "parallel"))]
-        let hashes = generate_hashes(&peaks, &self.hash_config);
+        let hashes = if let Some(triplet_config) = &self.triplet_config {
+            #[cfg(feature = "parallel")]
+            {
+                generate_triplet_hashes_parallel(&peaks, triplet_config)
+            }
+            #[cfg(not(feature = "parallel"))]
+            {
+                generate_triplet_hashes(&peaks, triplet_config)
+            }
+        } else {
+            #[cfg(feature = "parallel")]
+            {
+                generate_hashes_parallel(&peaks, &self.hash_config)
+            }
+            #[cfg(not(feature = "parallel"))]
+            {
+                generate_hashes(&peaks, &self.hash_config)
+            }
+        };
 
         Ok(hashes)
     }

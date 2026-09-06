@@ -236,6 +236,90 @@ impl PersistentIndex {
         })
     }
 
+    /// Like [`PersistentIndex::query`], but returns `None` unless the best
+    /// match's `confidence` is at least `min_confidence`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `None` if no matching hashes are found, the query fails, or
+    /// the best match's confidence is below `min_confidence`.
+    #[must_use]
+    pub fn query_with_min_confidence(
+        &self,
+        fingerprints: &[Fingerprint],
+        min_confidence: f32,
+    ) -> Option<QueryResult> {
+        self.query(fingerprints)
+            .filter(|r| r.confidence >= min_confidence)
+    }
+
+    /// Queries the index and returns up to `n` ranked matches, best first.
+    ///
+    /// Unlike [`PersistentIndex::query`], which returns only the single
+    /// best-matching track, this considers every track's own best histogram
+    /// bin and returns them sorted by `score` descending.
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)]
+    pub fn query_topn(&self, fingerprints: &[Fingerprint], n: usize) -> Vec<QueryResult> {
+        if fingerprints.is_empty() || n == 0 {
+            return Vec::new();
+        }
+
+        let Ok(read_txn) = self.db.begin_read() else {
+            return Vec::new();
+        };
+        let Ok(hashes) = read_txn.open_table(HASHES) else {
+            return Vec::new();
+        };
+
+        let mut histograms: HashMap<TrackId, HashMap<i64, u32>> = HashMap::new();
+
+        for fp in fingerprints {
+            let key = fp.hash;
+            if let Ok(Some(val)) = hashes.get(key) {
+                if let Ok(entries) = bincode::deserialize::<Vec<(TrackId, f32)>>(val.value()) {
+                    for (track_id, db_time) in entries {
+                        let offset = db_time - fp.anchor_time;
+                        let bin = self.offset_to_bin(offset);
+
+                        *histograms
+                            .entry(track_id)
+                            .or_default()
+                            .entry(bin)
+                            .or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+
+        let query_len = fingerprints.len() as f32;
+
+        let mut best_per_track: Vec<(TrackId, u32, i64)> = histograms
+            .into_iter()
+            .filter_map(|(track_id, bins)| {
+                bins.into_iter()
+                    .max_by_key(|&(_, count)| count)
+                    .map(|(bin, count)| (track_id, count, bin))
+            })
+            .collect();
+
+        best_per_track.sort_by(|a, b| b.1.cmp(&a.1));
+        best_per_track.truncate(n);
+
+        best_per_track
+            .into_iter()
+            .filter_map(|(track_id, score, bin)| {
+                self.track_name_with_txn(&read_txn, track_id)
+                    .map(|name| QueryResult {
+                        track_id: name,
+                        score,
+                        offset_secs: self.bin_to_offset(bin),
+                        confidence: score as f32 / query_len,
+                    })
+            })
+            .collect()
+    }
+
     /// Persists pending updates to disk. Since `redb` commits are durable on write,
     /// this is a no-op that returns `Ok(())`.
     ///

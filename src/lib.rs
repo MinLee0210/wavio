@@ -80,6 +80,7 @@ pub mod error;
 pub mod hash;
 pub mod index;
 pub mod io;
+pub mod triplet;
 pub mod utils;
 
 #[cfg(feature = "persist")]
