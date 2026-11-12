@@ -11,7 +11,6 @@ use crate::dsp::peaks::Peak;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-
 /// Configuration for the combinatorial hashing algorithm.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
@@ -41,7 +40,7 @@ impl Default for HashConfig {
             max_dt: 1.0,
             freq_bins: 1024,
             freq_resolution: 22_050.0 / 2048.0, // ~10.77 Hz per bin
-            dt_resolution: 0.01,                 // 10 ms quantization
+            dt_resolution: 0.01,                // 10 ms quantization
         }
     }
 }
@@ -269,6 +268,14 @@ pub fn generate_hashes_parallel(peaks: &[Peak], config: &HashConfig) -> Vec<Fing
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::float_cmp,
+    clippy::similar_names,
+    clippy::needless_pass_by_value
+)]
 mod tests {
     use super::*;
     use crate::dsp::peaks::Peak;
@@ -373,7 +380,7 @@ mod tests {
         let mut counts = std::collections::HashMap::<u64, usize>::new();
         for fp in &hashes {
             // Use anchor_time bits as key (approximate grouping).
-            let key = fp.anchor_time.to_bits() as u64;
+            let key = u64::from(fp.anchor_time.to_bits());
             *counts.entry(key).or_insert(0) += 1;
         }
         for &count in counts.values() {
@@ -425,10 +432,7 @@ mod tests {
 
     #[test]
     fn test_anchor_times_are_correct() {
-        let peaks = vec![
-            make_peak(0.1, 440.0),
-            make_peak(0.5, 880.0),
-        ];
+        let peaks = vec![make_peak(0.1, 440.0), make_peak(0.5, 880.0)];
         let config = HashConfig::default();
         let hashes = generate_hashes(&peaks, &config);
         assert_eq!(hashes.len(), 1);

@@ -66,13 +66,13 @@
 //! |------|-------------|--------------|
 //! | `parallel` | Rayon-based parallel fingerprinting and peak extraction | `rayon` |
 //! | `persist` | On-disk index persistence via `redb` | `redb`, `serde`, `bincode` |
-//! | `python` | Python bindings via PyO3 | `pyo3` |
+//! | `python` | Python bindings via `PyO3` | `pyo3` |
 //!
 //! Enable features in your `Cargo.toml`:
 //!
 //! ```toml
 //! [dependencies]
-//! wavio = { version = "0.1", features = ["persist", "parallel"] }
+//! wavio = { version = "0.4", features = ["persist", "parallel"] }
 //! ```
 
 pub mod dsp;
@@ -86,6 +86,6 @@ pub mod utils;
 #[cfg(feature = "persist")]
 pub mod persist;
 
-/// Python bindings via PyO3.
+/// Python bindings via `PyO3`.
 #[cfg(feature = "python")]
 pub mod python;

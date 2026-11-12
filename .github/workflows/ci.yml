@@ -58,6 +58,25 @@ jobs:
       - name: Run doc tests
         run: cargo test --doc --all-features
 
+  # Python bindings: build the extension and run the pytest suite
+  python:
+    name: Python bindings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build the extension and run the tests
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install maturin pytest
+          maturin develop --manifest-path Cargo.toml --features python,persist,parallel
+          python -m pytest -q python/tests
+
   # Security audit
   audit:
     name: Security Audit

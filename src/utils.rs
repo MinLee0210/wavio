@@ -56,9 +56,7 @@ pub fn validate_audio_file(path: &str) -> Result<String, WavioError> {
     }
 
     // 3. Readability check -- attempt to open the file.
-    fs::File::open(file_path).map_err(|e| {
-        WavioError::FileNotReadable(format!("{path}: {e}"))
-    })?;
+    fs::File::open(file_path).map_err(|e| WavioError::FileNotReadable(format!("{path}: {e}")))?;
 
     // Return the canonical path so downstream code works with absolute paths.
     file_path
