@@ -1,3 +1,5 @@
+# NOTE: the PyPI project name "wavio" is held by an unrelated project, so the
+# upload step below fails until this package is published under another name.
 name: Publish to PyPI
 
 on:
@@ -26,7 +28,9 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: build
-          args: --release --out dist --find-interpreter
+          # The PyO3 bindings are behind the `python` feature; without it
+          # maturin falls back to a useless bindings-free (cffi) wheel.
+          args: --release --out dist --find-interpreter --manifest-path Cargo.toml --features python,persist,parallel
           
       - name: Upload wheels
         uses: actions/upload-artifact@v4
