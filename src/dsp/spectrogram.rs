@@ -4,8 +4,8 @@
 //! power spectrogram stored as `ndarray::Array2<f32>`.
 
 use ndarray::Array2;
-use rustfft::num_complex::Complex;
 use rustfft::FftPlanner;
+use rustfft::num_complex::Complex;
 
 use crate::error::WavioError;
 
@@ -136,6 +136,14 @@ pub fn compute_spectrogram(
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::float_cmp,
+    clippy::similar_names,
+    clippy::needless_pass_by_value
+)]
 mod tests {
     use super::*;
 
@@ -251,7 +259,7 @@ mod tests {
         let spec = compute_spectrogram(&samples, &config).unwrap();
 
         // All bins should be very low (near -100 dB from epsilon floor).
-        for val in spec.iter() {
+        for val in &spec {
             assert!(*val < -80.0, "Expected silence dB < -80, got {val}");
         }
     }

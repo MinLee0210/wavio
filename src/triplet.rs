@@ -37,6 +37,11 @@ use crate::hash::Fingerprint;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
+/// Bit set on triplet hashes when they share an index with pairwise hashes
+/// (hybrid mode), so the two hash families can never collide. Neither
+/// family's own bit layout uses bit 63.
+pub const TRIPLET_TAG: u64 = 0x8000_0000_0000_0000;
+
 /// Frequencies below this are excluded from ratio computation to avoid
 /// near-zero denominators blowing up the ratio.
 const MIN_FREQ_HZ: f32 = 1.0;
@@ -189,30 +194,41 @@ pub fn generate_triplet_hashes(peaks: &[Peak], config: &TripletHashConfig) -> Ve
     if peaks.len() < 3 {
         return Vec::new();
     }
+    let sorted_peaks = sorted_by_time(peaks);
+    let mut fingerprints = Vec::new();
+    for i in 0..sorted_peaks.len() {
+        anchor_triplets(&sorted_peaks, i, config, &mut fingerprints);
+    }
+    fingerprints
+}
 
-    let mut sorted_peaks = peaks.to_vec();
-    sorted_peaks.sort_by(|a, b| {
+fn sorted_by_time(peaks: &[Peak]) -> Vec<Peak> {
+    let mut sorted = peaks.to_vec();
+    sorted.sort_by(|a, b| {
         a.time
             .partial_cmp(&b.time)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
+    sorted
+}
 
-    let mut fingerprints = Vec::new();
-
-    for (i, anchor) in sorted_peaks.iter().enumerate() {
-        let candidates = collect_candidates(&sorted_peaks, i, config);
-
-        for pair in candidates.windows(2) {
-            if let Some(hash) = hash_triplet(anchor, pair[0], pair[1], config) {
-                fingerprints.push(Fingerprint {
-                    hash,
-                    anchor_time: anchor.time,
-                });
-            }
+/// Appends the triplet hashes for the anchor at `anchor_idx` to `out`.
+fn anchor_triplets(
+    sorted_peaks: &[Peak],
+    anchor_idx: usize,
+    config: &TripletHashConfig,
+    out: &mut Vec<Fingerprint>,
+) {
+    let anchor = &sorted_peaks[anchor_idx];
+    let candidates = collect_candidates(sorted_peaks, anchor_idx, config);
+    for pair in candidates.windows(2) {
+        if let Some(hash) = hash_triplet(anchor, pair[0], pair[1], config) {
+            out.push(Fingerprint {
+                hash,
+                anchor_time: anchor.time,
+            });
         }
     }
-
-    fingerprints
 }
 
 /// Collects up to `config.fan_value` candidate target peaks for the anchor
@@ -259,36 +275,26 @@ pub fn generate_triplet_hashes_parallel(
     if peaks.len() < 3 {
         return Vec::new();
     }
-
-    let mut sorted_peaks = peaks.to_vec();
-    sorted_peaks.sort_by(|a, b| {
-        a.time
-            .partial_cmp(&b.time)
-            .unwrap_or(std::cmp::Ordering::Equal)
-    });
-
-    sorted_peaks
-        .par_iter()
-        .enumerate()
-        .flat_map(|(i, anchor)| {
-            let candidates = collect_candidates(&sorted_peaks, i, config);
+    let sorted_peaks = sorted_by_time(peaks);
+    (0..sorted_peaks.len())
+        .into_par_iter()
+        .flat_map(|i| {
             let mut local = Vec::new();
-
-            for pair in candidates.windows(2) {
-                if let Some(hash) = hash_triplet(anchor, pair[0], pair[1], config) {
-                    local.push(Fingerprint {
-                        hash,
-                        anchor_time: anchor.time,
-                    });
-                }
-            }
-
+            anchor_triplets(&sorted_peaks, i, config, &mut local);
             local
         })
         .collect()
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::float_cmp,
+    clippy::similar_names,
+    clippy::needless_pass_by_value
+)]
 mod tests {
     use super::*;
 

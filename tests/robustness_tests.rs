@@ -9,6 +9,15 @@
 //! knife's-edge absolute threshold on pairwise alone, since coarse
 //! quantization can let a fraction of pairwise hashes survive a small
 //! perturbation purely by chance.
+#![allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_lossless,
+    clippy::float_cmp,
+    clippy::similar_names,
+    clippy::too_many_lines
+)]
 
 use std::collections::HashSet;
 

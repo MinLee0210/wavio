@@ -38,6 +38,7 @@ print(f"Got {len(hashes)} fingerprints")
 | Exception | When |
 |-----------|------|
 | `IOError` | File not found, or not a valid WAV file |
+| `ValueError` | `PyFingerprinter(mode=...)` is not `"pairwise"`, `"triplet"` or `"hybrid"` |
 | `RuntimeError` | Spectrogram or peak extraction failed |
 
 ---
@@ -117,6 +118,9 @@ if result:
 | `track_id` | `str` | Name of the matched track |
 | `score` | `int` | Number of time-aligned hash hits (higher = better) |
 | `offset_secs` | `float` | Estimated position of the clip within the track (seconds) |
+| `confidence` | `float` | `score` divided by the number of query fingerprints |
+| `margin` | `float` | Lead over the runner-up as a fraction of `score` |
+| `speed` | `float` | Estimated playback speed (`1.0` unless `query_scaled` was used) |
 
 !!! tip "Score filtering"
     A score of 0 means no overlapping hashes. For production use, filter on a minimum threshold:
@@ -152,3 +156,20 @@ print(f"Loaded {index.track_count} tracks")
 ```
 
 **Raises:** `IOError` if the path does not exist or cannot be read.
+
+
+---
+
+## Newer additions
+
+See `python/README.md` for worked examples.
+
+| Name | Description |
+|------|-------------|
+| `PyFingerprinter(mode=...)` | `"pairwise"` (default), `"triplet"` or `"hybrid"`; `.mode` / `.signature` getters |
+| `PyFingerprinter.fingerprint_samples(samples)` | Fingerprint mono `float32` audio at 22,050 Hz from a NumPy array, `array('f')` or list |
+| `PyStreamingFingerprinter(fp, block_duration_secs=10.0, overlap_secs=1.0)` | `push(samples)` / `finish()` for unbounded streams |
+| `PyPersistentIndex(path)` | On-disk index: `insert`, `insert_many`, `remove_track`, `contains_track`, `query*`, `ensure_fingerprinter`, `check_fingerprinter`, `signature`, `track_count`, `hash_count` |
+| `PyIndex.query*(..., idf=False)` | Rarity-weighted voting |
+| `PyIndex.query_scaled(fps, max_deviation=0.08, step=0.01, idf=False)` | Also estimates playback speed |
+| `PyIndex.contains_track`, `signature`, `set_signature` | Track lookup and settings tag |

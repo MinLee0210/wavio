@@ -10,7 +10,9 @@
 - **In-memory & on-disk indexing** — query against thousands of tracks in microseconds
 - **Ranked & threshold-gated queries** — `Index::query_topn` for runner-up candidates, `Index::query_with_min_confidence` to reject weak matches
 - **Streaming fingerprinting** — `StreamingFingerprinter` processes audio in overlapping blocks, no need to hold the whole file in memory
-- **Pitch-shift / time-stretch-robust mode** — opt-in triplet hashing (`Fingerprinter::with_triplet_hashing`, CLI `--robust`) trades some collision resistance for ratio-based hashes that are largely invariant to uniform pitch shift and time stretch
+- **Three hashing modes** — `pairwise` (default; best in noise), `triplet` (ratio-based; survives speed/pitch changes but is weak in noise) and `hybrid` (both in one index; survives speed/pitch changes *and* keeps pairwise's noise behavior, ~1.5x index size). See [accuracy](#accuracy)
+- **Safe on-disk index** — answers queries straight from disk, appends in O(log n), records the settings it was built with and refuses to be queried with different ones
+- **Match quality signals** — `confidence`, `margin` over the runner-up, and an optional playback-speed estimate
 - **Deterministic** — same input always produces the same fingerprints
 - **Zero unsafe code** — `#![forbid(unsafe_code)]`
 - **Parallel processing** — optional rayon-based parallelism
@@ -26,7 +28,7 @@
 wavio = "0.1"
 
 # With optional features:
-wavio = { version = "0.1", features = ["persist", "parallel"] }
+wavio = { version = "0.4", features = ["persist", "parallel"] }
 ```
 
 ### Feature Flags
@@ -88,7 +90,13 @@ Other flags:
 
 - `index --force` — re-index a track even if it's already in the database (by default, already-indexed tracks are skipped).
 - `query --min-confidence <F>` — reject a match whose confidence is below `<F>` (0.0-1.0), reporting "no match" instead.
-- `--robust` (global, works on both `index` and `query`) — use pitch-shift / time-stretch-robust triplet hashing instead of the default pairwise hashing. **A database must be queried with the same `--robust` setting it was indexed with** — mixing modes silently degrades to "no match" rather than erroring.
+- `query --min-margin <F>` — reject a match that leads the runner-up by less than `<F>` of its own score.
+- `query --detect-speed` — also search playback-speed hypotheses (+-8%) and print the estimated speed of the clip.
+- `query --idf` — weight each matching hash by its rarity (hashes that occur in many places count for less). Never hurt in testing; helps the triplet/hybrid modes in noise by a few points.
+- `--hybrid` (global) — index/query with both pairwise and triplet hashes. **Use it when speed or pitch changes are possible** (radio, DJ sets, tape/vinyl, time-stretched copies): +3% speed is 100% vs 18% for pairwise. For plain noise and compression, pairwise was as accurate on real recordings at two-thirds of the index size. Costs ~1.5x index size.
+- `--robust` (global) — triplet hashes only (smaller index; but much weaker than pairwise or hybrid in noise on real audio).
+
+A database records the hashing settings it was built with. Querying or extending it with different settings (e.g. `--hybrid` against a default database) fails with `Incompatible index` instead of silently returning "no match".
 
 ```bash
 # Build the CLI (requires the persist feature)
@@ -110,7 +118,7 @@ Usage:
 ```python
 import wavio
 
-fp = wavio.PyFingerprinter()
+fp = wavio.PyFingerprinter()          # or mode="triplet" / mode="hybrid"
 hashes = fp.fingerprint_file("track.wav")
 
 index = wavio.PyIndex()
@@ -122,23 +130,54 @@ print(result)  # {'track_id': 'my_track', 'score': ..., 'offset_secs': ...}
 
 See [python/README.md](python/README.md) for more details.
 
+## Accuracy
+
+Top-1 identification accuracy, 3-second clips, 40 synthetic tracks (see [`examples/06_accuracy_eval.rs`](examples/06_accuracy_eval.rs)):
+
+| Distortion | pairwise | triplet | triplet + interpolation | **hybrid** |
+|---|---:|---:|---:|---:|
+| clean | 100% | 100% | 100% | 100% |
+| noise 20 dB SNR | 100% | 90% | 90% | 100% |
+| noise 0 dB SNR | 100% | 52% | 42% | 98% |
+| speed +2% | 5% | 85% | 98% | 95% |
+| speed -3% | 2% | 88% | 95% | 95% |
+| speed +6% | 5% | 78% | 90% | 92% |
+| noise 10 dB + speed +2% | 0% | 55% | 80% | 80% |
+| index size (hashes/track) | 14.6k | 7.4k | 7.4k | 22.0k |
+
+**Caveat:** that library is synthetic (random melodies), which is why pairwise looks perfect on noise. It supports *relative* comparison, not absolute claims.
+
+Real recordings tell a more sober story. 20 real tracks, queries cut from the originals, converted to 48 kHz, optionally MP3-encoded, then resampled by wavio (60 queries per cell, so differences under ~8 points are not significant):
+
+| Distortion | pairwise | triplet + interp | hybrid | hybrid + `--idf` |
+|---|---:|---:|---:|---:|
+| 48 kHz clean | 100% | 100% | 100% | 100% |
+| MP3 32 kbps | 100% | 98% | 100% | 100% |
+| noise 10 dB SNR | 93% | 27% | 83% | 87% |
+| noise 0 dB SNR | 60% | 12% | 52% | 55% |
+| speed +3% | 18% | 100% | 100% | 100% |
+
+Takeaways: MP3 compression is a non-issue; real noise is much harder than synthetic noise; triplet-only is weak in noise; hybrid's edge over pairwise is speed/pitch robustness, not noise. Full tables for both harnesses are in [BENCHMARKS.md](.github/BENCHMARKS.md). The real-audio set is small (20 short tracks) and should be broadened.
+
 ## Benchmarks
 
-> Platform: macOS, release profile · Criterion · 22,050 Hz synthetic audio
+> Linux x86-64 (12 threads), release profile, Criterion. Timings on this machine vary by about +-20% run to run.
 
-| Benchmark | Median |
-|-----------|--------|
-| Fingerprint single 3-min track | 88.6 ms |
-| Index 1,000 tracks (20 hashes each) | 1.04 ms |
-| Query 1,000 lookups | 568 µs (~0.57 µs/query) |
+| Benchmark | Result |
+|---|---|
+| Fingerprint a 3-min track (serial / `parallel` peaks) | ~0.2 s |
+| Query a 10 s clip against 200 tracks / 10M entries (in memory) | ~0.7-1.0 ms |
+| Query the same kind of clip against 50 tracks on disk | ~2 ms |
+| Insert a 50,000-hash track into the on-disk index | ~36 ms (was ~290 ms) |
 
 Reproduce with:
 
 ```bash
-cargo bench --features parallel
+cargo bench --features parallel,persist
+cargo run --release --features parallel --example 06_accuracy_eval
 ```
 
-See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for full results.
+See [BENCHMARKS.md](.github/BENCHMARKS.md) for methodology and full results.
 
 ## Architecture
 

@@ -39,4 +39,9 @@ pub enum WavioError {
     /// A general I/O error occurred during file operations.
     #[error("I/O error: {0}")]
     IoError(String),
+    /// A persisted index was built with a different on-disk schema or
+    /// fingerprinting configuration than the one now in use, so querying or
+    /// extending it would silently produce wrong results.
+    #[error("Incompatible index: {0}")]
+    IncompatibleIndex(String),
 }

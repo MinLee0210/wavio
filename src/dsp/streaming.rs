@@ -302,6 +302,14 @@ impl StreamingFingerprinter {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::float_cmp,
+    clippy::similar_names,
+    clippy::needless_pass_by_value
+)]
 mod tests {
     use super::*;
     use std::collections::HashSet;

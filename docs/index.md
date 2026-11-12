@@ -73,7 +73,7 @@ Two recordings of the same song — even with background noise — share a large
 
     ```toml
     [dependencies]
-    wavio = { version = "0.1", features = ["persist", "parallel"] }
+    wavio = { version = "0.4", features = ["persist", "parallel"] }
     ```
 
 === "Python"

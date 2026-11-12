@@ -4,9 +4,9 @@
 //! generation, and peak detection.
 
 pub mod audio;
+pub mod fingerprint;
 pub mod peaks;
 pub mod spectrogram;
-pub mod fingerprint;
 pub mod streaming;
 
 pub use fingerprint::Fingerprinter;

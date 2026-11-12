@@ -1,3 +1,8 @@
+// The CLI prints paths with `{:?}` on purpose (quoted, so paths with spaces are
+// unambiguous, and tests assert on that exact wording); `main` is a flat
+// subcommand dispatcher.
+#![allow(clippy::unnecessary_debug_formatting, clippy::too_many_lines)]
+
 use clap::{Parser, Subcommand};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::{Path, PathBuf};
@@ -5,7 +10,8 @@ use std::time::Instant;
 
 use wavio::dsp::Fingerprinter;
 use wavio::hash::Fingerprint;
-use wavio::index::Index;
+use wavio::index::{QueryOptions, ScaleSearch};
+use wavio::persist::PersistentIndex;
 use wavio::triplet::TripletHashConfig;
 
 #[cfg(feature = "parallel")]
@@ -23,11 +29,16 @@ struct Cli {
 
     /// Use pitch-shift / time-stretch-robust triplet hashing instead of the
     /// default pairwise hashing. A database must be queried with the same
-    /// setting it was indexed with -- mixing modes silently degrades to "no
-    /// match" rather than erroring, since the on-disk hashes don't record
-    /// which mode produced them.
+    /// setting it was indexed with; the database records the settings it was
+    /// built with and this tool refuses to mix them.
     #[arg(long, global = true)]
     robust: bool,
+
+    /// Index and query with **both** pairwise and triplet hashes. Best overall
+    /// accuracy (robust to heavy noise *and* speed / pitch changes) at about
+    /// 1.5x the index size. Takes precedence over `--robust`.
+    #[arg(long, global = true)]
+    hybrid: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -61,6 +72,21 @@ enum Commands {
         /// Reject matches whose confidence is below this threshold (0.0-1.0)
         #[arg(long, default_value_t = 0.0)]
         min_confidence: f32,
+
+        /// Reject matches whose lead over the runner-up track is below this
+        /// fraction of the winning score (0.0-1.0)
+        #[arg(long, default_value_t = 0.0)]
+        min_margin: f32,
+
+        /// Also search playback-speed hypotheses (+-8%) and report the
+        /// estimated speed of the clip relative to the indexed track
+        #[arg(long)]
+        detect_speed: bool,
+
+        /// Weight each matching hash by its rarity, so hashes that occur in
+        /// many places count for less. Helps the triplet/hybrid modes in noise
+        #[arg(long)]
+        idf: bool,
     },
     /// Print information about a database
     Info {
@@ -70,14 +96,23 @@ enum Commands {
     },
 }
 
-fn fingerprint_file(path: &Path, robust: bool) -> anyhow::Result<Vec<Fingerprint>> {
-    let fingerprinter = if robust {
-        Fingerprinter::default().with_triplet_hashing(TripletHashConfig::default())
+fn make_fingerprinter(cli: &Cli) -> Fingerprinter {
+    if cli.hybrid {
+        Fingerprinter::default().with_hybrid_hashing(TripletHashConfig::default())
+    } else if cli.robust {
+        Fingerprinter::default()
+            .with_triplet_hashing(TripletHashConfig::default())
+            .with_peak_interpolation(true)
     } else {
         Fingerprinter::default()
-    };
-    let hashes = fingerprinter.fingerprint_file(path.to_str().unwrap())?;
-    Ok(hashes)
+    }
+}
+
+fn fingerprint_file(path: &Path, cli: &Cli) -> anyhow::Result<Vec<Fingerprint>> {
+    let path = path
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("path {path:?} is not valid UTF-8"))?;
+    Ok(make_fingerprinter(cli).fingerprint_file(path)?)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -94,7 +129,10 @@ fn main() -> anyhow::Result<()> {
                         if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
                             let ext_lower = ext.to_lowercase();
                             let is_supported = if cfg!(feature = "symphonia") {
-                                matches!(ext_lower.as_str(), "wav" | "mp3" | "flac" | "m4a" | "aac" | "ogg")
+                                matches!(
+                                    ext_lower.as_str(),
+                                    "wav" | "mp3" | "flac" | "m4a" | "aac" | "ogg"
+                                )
                             } else {
                                 ext_lower == "wav"
                             };
@@ -110,18 +148,22 @@ fn main() -> anyhow::Result<()> {
 
             println!("Found {} files to index...", files.len());
 
-            let mut index = if db.exists() {
-                Index::load_from_disk(db)?
-            } else {
-                Index::default()
-            };
+            let mut store = PersistentIndex::open(db)?;
+            let signature = make_fingerprinter(&cli).signature();
+            if store.signature().is_none() && store.track_count() > 0 {
+                eprintln!(
+                    "warning: {db:?} was created before settings were recorded, so it cannot be \
+                     checked against the current settings. Assuming they match."
+                );
+            }
+            store.ensure_signature(&signature)?;
 
             if !*force {
                 files.retain(|file| {
                     let Some(name) = file.file_stem().and_then(|s| s.to_str()) else {
                         return true;
                     };
-                    if index.contains_track(name) {
+                    if store.contains_track(name) {
                         println!("Skipping '{name}': already indexed (use --force to re-index).");
                         false
                     } else {
@@ -141,9 +183,7 @@ fn main() -> anyhow::Result<()> {
             // Fingerprinting (load + FFT + peak extraction + hashing) is the
             // CPU-heavy, per-file-independent part of indexing, so it runs
             // across the thread pool when the `parallel` feature is enabled.
-            // Insertion into the index is done afterward, serially, since it
-            // mutates shared state.
-            #[cfg(feature = "parallel")]
+            // The results are then written to the database in one transaction.
             let named_files: Vec<(String, PathBuf)> = files
                 .into_iter()
                 .filter_map(|file| {
@@ -152,64 +192,67 @@ fn main() -> anyhow::Result<()> {
                 })
                 .collect();
 
+            let work = |(name, file): &(String, PathBuf)| {
+                let result = fingerprint_file(file, &cli);
+                pb.inc(1);
+                (name.clone(), result)
+            };
             #[cfg(feature = "parallel")]
-            let results: Vec<(String, anyhow::Result<Vec<Fingerprint>>)> = named_files
-                .par_iter()
-                .map(|(name, file)| {
-                    let result = fingerprint_file(file, cli.robust);
-                    pb.inc(1);
-                    (name.clone(), result)
-                })
-                .collect();
-
+            let results: Vec<(String, anyhow::Result<Vec<Fingerprint>>)> =
+                named_files.par_iter().map(work).collect();
             #[cfg(not(feature = "parallel"))]
-            let results: Vec<(String, anyhow::Result<Vec<Fingerprint>>)> = files
-                .iter()
-                .filter_map(|file| {
-                    file.file_stem().and_then(|s| s.to_str()).map(|track_name| {
-                        let name = track_name.to_string();
-                        let result = fingerprint_file(file, cli.robust);
-                        pb.inc(1);
-                        (name, result)
-                    })
-                })
-                .collect();
+            let results: Vec<(String, anyhow::Result<Vec<Fingerprint>>)> =
+                named_files.iter().map(work).collect();
 
+            let mut batch: Vec<(String, Vec<Fingerprint>)> = Vec::new();
             for (name, result) in results {
                 match result {
                     Ok(hashes) => {
                         if cli.verbose {
                             pb.println(format!("Indexed '{}': {} hashes", name, hashes.len()));
                         }
-                        index.insert(&name, &hashes);
+                        batch.push((name, hashes));
                     }
                     Err(e) => {
-                        pb.println(format!("Failed to index '{}': {}", name, e));
+                        pb.println(format!("Failed to index '{name}': {e}"));
                     }
                 }
             }
             pb.finish_with_message("Indexing complete.");
 
-            println!("Saving index to {:?}...", db);
-            index.save_to_disk(db)?;
+            println!("Saving index to {db:?}...");
+            if *force {
+                for (name, _) in &batch {
+                    store.remove_track(name)?;
+                }
+            }
+            store.insert_many(&batch)?;
             println!("Done.");
         }
         Commands::Query {
             db,
             input,
             min_confidence,
+            min_margin,
+            detect_speed,
+            idf,
         } => {
             if !db.exists() {
-                anyhow::bail!("Database file {:?} does not exist. Index first.", db);
+                anyhow::bail!("Database file {db:?} does not exist. Index first.");
             }
-            let index = Index::load_from_disk(db)?;
+            let store = PersistentIndex::open(db)?;
+            store.check_signature(&make_fingerprinter(&cli).signature())?;
 
             let start = Instant::now();
-            let hashes = fingerprint_file(input, cli.robust)?;
+            let hashes = fingerprint_file(input, &cli)?;
             let fingerprint_time = start.elapsed();
 
             let query_start = Instant::now();
-            let result = index.query(&hashes);
+            let mut options = QueryOptions::new().with_idf_weighting(*idf);
+            if *detect_speed {
+                options = options.with_scale_search(ScaleSearch::default());
+            }
+            let result = store.query_with(&hashes, 1, &options).into_iter().next();
             let query_time = query_start.elapsed();
 
             if cli.verbose {
@@ -218,7 +261,7 @@ fn main() -> anyhow::Result<()> {
                     hashes.len(),
                     fingerprint_time
                 );
-                println!("Query performed in {:?}", query_time);
+                println!("Query performed in {query_time:?}");
             }
 
             let result = result.filter(|r| {
@@ -228,6 +271,14 @@ fn main() -> anyhow::Result<()> {
                         r.track_id,
                         r.confidence * 100.0,
                         min_confidence * 100.0
+                    );
+                    false
+                } else if r.margin < *min_margin {
+                    println!(
+                        "Best candidate '{}' leads the runner-up by only {:.1}% (threshold {:.1}%) — treating as no match.",
+                        r.track_id,
+                        r.margin * 100.0,
+                        min_margin * 100.0
                     );
                     false
                 } else {
@@ -240,7 +291,11 @@ fn main() -> anyhow::Result<()> {
                     println!("Match found: {}", r.track_id);
                     println!("Score: {}", r.score);
                     println!("Confidence: {:.1}%", r.confidence * 100.0);
+                    println!("Margin over runner-up: {:.1}%", r.margin * 100.0);
                     println!("Offset: {:.2}s", r.offset_secs);
+                    if *detect_speed {
+                        println!("Estimated speed: {:.2}x", r.speed);
+                    }
                 }
                 None => {
                     println!("No match found.");
@@ -249,12 +304,16 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Info { db } => {
             if !db.exists() {
-                anyhow::bail!("Database file {:?} does not exist.", db);
+                anyhow::bail!("Database file {db:?} does not exist.");
             }
-            let index = Index::load_from_disk(db)?;
-            println!("Database: {:?}", db);
-            println!("Tracks indexed: {}", index.track_count());
-            println!("Total hashes: {}", index.hash_count());
+            let store = PersistentIndex::open(db)?;
+            println!("Database: {db:?}");
+            println!("Tracks indexed: {}", store.track_count());
+            println!("Total hashes: {}", store.hash_count());
+            match store.signature() {
+                Some(sig) => println!("Built with: {sig}"),
+                None => println!("Built with: (unknown — predates settings tracking)"),
+            }
         }
     }
 
