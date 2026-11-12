@@ -59,7 +59,7 @@
 - [x] 🦀 Learn `ndarray` Array2 layout — store spectrogram as `Array2<f32>` (shape: `[n_frames, n_bins]`)
 - [x] Write unit test: sine wave at known frequency should show peak at that bin
 - [x] Write unit test: all-zeros input should produce all-`-inf` dB spectrogram
-- [ ] Benchmark FFT pipeline with `criterion` — establish baseline ms/track
+- [x] Benchmark FFT pipeline with `criterion` — establish baseline ms/track (`dsp/spectrogram_3min`, see BENCHMARKS.md)
 - [ ] ⚠️ FFT size choice (2048 vs 4096) affects frequency resolution vs time resolution — test both, document tradeoff
 - [x] **Milestone:** Can generate a correct spectrogram from a WAV file
 
@@ -114,7 +114,7 @@
 - [x] Write unit test: index 10 tracks, query clip from track 5 → correct match only
 - [x] Write unit test: query audio not in index → `None` result
 - [x] ⚠️ Offset histogram bin size affects accuracy — test `10ms` vs `50ms` bins
-- [ ] Benchmark: query latency on 1k track index with `criterion`
+- [x] Benchmark: query latency on 1k track index with `criterion` (now a 200-track / 10M-entry index, see BENCHMARKS.md)
 - [x] **Milestone:** Full round-trip — WAV file → index → query → correct track name
 
 ---

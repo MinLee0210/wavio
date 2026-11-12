@@ -176,7 +176,12 @@ let mut index = Index::new(IndexConfig { offset_bin_size: 0.01 });
 | `hash_count() -> usize` | Total hash entries |
 | `save_to_disk(path)` | Save to redb DB *(persist feature)* |
 | `load_from_disk(path) -> Result<Index>` | Load from redb DB *(persist feature)* |
-| `insert_batch_parallel(batch)` | Parallel batch insert *(parallel feature)* |
+| `query_topn(fingerprints, n) -> Vec<QueryResult>` | Ranked matches, best first |
+| `query_with_min_confidence(fingerprints, min)` | Reject matches below a confidence threshold |
+| `query_scaled(fingerprints, &ScaleSearch)` | Also search playback-speed hypotheses; sets `QueryResult::speed` |
+| `contains_track(name) -> bool` | Whether a track is already indexed |
+| `insert_batch(batch)` | Insert many `(name, fingerprints)` pairs (serial) |
+| `signature() / set_signature(sig)` | Settings signature written by `save_to_disk` (see `Fingerprinter::signature`) |
 
 ### `QueryResult`
 
@@ -185,6 +190,9 @@ let mut index = Index::new(IndexConfig { offset_bin_size: 0.01 });
 | `track_id` | `String` | Name of matching track |
 | `score` | `u32` | Aligned hash hit count |
 | `offset_secs` | `f32` | Estimated position in track (seconds) |
+| `confidence` | `f32` | `score / query_fingerprints` |
+| `margin` | `f32` | Lead over the runner-up, as a fraction of `score` (1.0 = no competitor) |
+| `speed` | `f32` | Estimated playback speed; `1.0` unless a `ScaleSearch` was used |
 
 ### `IndexConfig`
 

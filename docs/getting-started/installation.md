@@ -15,7 +15,7 @@ Enable optional features based on your needs:
 
 ```toml
 [dependencies]
-wavio = { version = "0.1", features = ["persist", "parallel"] }
+wavio = { version = "0.4", features = ["persist", "parallel"] }
 ```
 
 | Flag | What it adds | Extra dependencies |

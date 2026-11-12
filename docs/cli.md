@@ -65,8 +65,15 @@ wavio-cli query --db <DB_PATH> <FILE>
 Match found: hotel_california
 Score: 312
 Confidence: 87.3%
+Margin over runner-up: 62.0%
 Offset: 47.35s
 ```
+
+Options: `--min-confidence <F>` and `--min-margin <F>` turn weak matches into "no match"; `--detect-speed` also prints `Estimated speed: 1.04x`.
+
+### Hashing modes
+
+`--hybrid` (pairwise + triplet hashes; best overall, ~1.5x index size) and `--robust` (triplet only) are global flags. The database records the settings it was built with, so querying or extending it with a different mode fails with `Incompatible index` rather than silently finding nothing. `index --force` replaces tracks that are already present.
 
 If no match is found:
 
